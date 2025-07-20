@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ENEMY_DATA, CROCODILE_ICON } from '../../constants';
 import { WeaponType, EnemyType, ItemType } from '../../types';
@@ -47,6 +46,7 @@ const InfoModal: React.FC<InfoModalProps> = ({ onClose }) => {
             <div 
                 className="bg-gray-900 text-white border-2 border-green-400 rounded-lg shadow-2xl shadow-green-500/20 w-full max-w-4xl h-[90vh] overflow-y-auto p-8"
                 onClick={e => e.stopPropagation()}
+                style={{ touchAction: 'pan-y' }}
             >
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-4xl font-cinzel text-green-400">Whitepaper</h1>

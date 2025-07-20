@@ -24,7 +24,9 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onShowLeaderboard })
         <>
             <div className="absolute inset-0 bg-gray-900 flex flex-col justify-center items-center z-30 text-white p-4">
                 <div className="text-center mb-10">
-                    <h1 className="text-6xl md:text-8xl font-cinzel text-green-400 mb-4 drop-shadow-[0_4px_4px_rgba(0,0,0,0.7)]">Trench Survivors</h1>
+                    <h1 className="text-6xl md:text-8xl font-cinzel text-green-400 mb-4 drop-shadow-[0_4px_4px_rgba(0,0,0,0.7)]">
+                        TRENCH<br />SURVIVORS
+                    </h1>
                     <p className="text-lg md:text-xl text-gray-300">The market is a sea of red. Shill, dig, and diamond hand your way out of the trenches.</p>
                 </div>
 
@@ -45,7 +47,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onShowLeaderboard })
                 </div>
 
 
-                <div className="mt-12 flex flex-col sm:flex-row gap-4 items-center">
+                <div className="mt-12 flex flex-col gap-4 items-center">
                     <button
                         onClick={onShowLeaderboard}
                         className="bg-gray-700 text-yellow-300 font-bold py-2 px-6 rounded-lg text-lg font-cinzel hover:bg-gray-600 transition-colors"

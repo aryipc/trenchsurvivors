@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ScoreEntry } from '../../types';
 
@@ -30,7 +29,7 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ scores, onBack })
             <div className="w-full max-w-3xl">
                 <h1 className="text-6xl font-cinzel text-yellow-300 mb-8 text-center drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">Local High Scores</h1>
                 
-                <div className="bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg max-h-[60vh] overflow-y-auto">
+                <div className="bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg max-h-[60vh] overflow-y-auto" style={{ touchAction: 'pan-y' }}>
                     {scores.length > 0 ? (
                         <table className="w-full text-left">
                             <thead className="bg-gray-900/50 sticky top-0">

@@ -1,6 +1,4 @@
 
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import GameScreen from './components/GameScreen';
 import { Hud } from './components/ui/Hud';
@@ -681,6 +679,7 @@ const App: React.FC = () => {
                             score={gameState.kills} 
                             marketCap={gameState.marketCap} 
                             onRestart={() => handleStartGame(gameState.currentUser)}
+                            onBackToHome={handleBackToMenu}
                             isNewHighScore={gameState.isNewHighScore}
                             username={gameState.currentUser}
                         />;

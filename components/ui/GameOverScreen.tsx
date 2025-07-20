@@ -6,11 +6,12 @@ interface GameOverScreenProps {
     score: number;
     marketCap: number;
     onRestart: () => void;
+    onBackToHome: () => void;
     isNewHighScore: boolean;
     username: CurrentUser | null;
 }
 
-const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, marketCap, onRestart, isNewHighScore, username }) => {
+const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, marketCap, onRestart, onBackToHome, isNewHighScore, username }) => {
     const formatMarketCap = (value: number) => {
         return `$${Math.floor(value).toLocaleString()}`;
     };
@@ -30,12 +31,21 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, marketCap, onRes
                 <p>Final Market Cap: <span className="text-yellow-300 font-bold">{formatMarketCap(marketCap)}</span></p>
                 <p>You flipped <span className="text-yellow-300 font-bold">{score}</span> bears</p>
             </div>
-            <button
-                onClick={onRestart}
-                className="bg-yellow-400 text-gray-900 font-bold py-4 px-10 rounded-lg text-2xl font-cinzel hover:bg-yellow-300 transition-colors transform hover:scale-105"
-            >
-                Ape In Again
-            </button>
+            
+            <div className="flex flex-col items-center gap-2">
+                <button
+                    onClick={onRestart}
+                    className="bg-yellow-400 text-gray-900 font-bold py-4 px-10 rounded-lg text-2xl font-cinzel hover:bg-yellow-300 transition-colors transform hover:scale-105"
+                >
+                    Ape In Again
+                </button>
+                <button
+                    onClick={onBackToHome}
+                    className="text-gray-400 hover:text-white transition-colors py-2 px-4 rounded-lg text-lg"
+                >
+                    Back to Home
+                </button>
+            </div>
         </div>
     );
 };
