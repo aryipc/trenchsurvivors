@@ -1,98 +1,79 @@
-import { Redis } from '@upstash/redis';
+import { kv } from '@vercel/kv';
 import { ScoreEntry, CurrentUser } from '../types';
 
-let redis: Redis | null = null;
-try {
-    // Be robust: check for Vercel KV, Vercel Redis, and standard Upstash variables.
-    const url = process.env.KV_REST_API_URL || process.env.KV_URL || process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL;
-    const token = process.env.KV_REST_API_TOKEN || process.env.REDIS_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+// The 'kv' object is automatically configured by Vercel's environment variables.
+// No need to manually initialize or check for process.env.
 
-    if (url && token) {
-        redis = new Redis({
-            url: url.trim(),
-            token: token.trim(),
-        });
-        console.log("Successfully initialized Redis client for leaderboard.");
-    } else {
-        console.warn('Leaderboard is disabled. Could not find Vercel KV/Redis or Upstash environment variables.');
-    }
-} catch (e) {
-    console.error("Could not initialize Redis client:", e);
-}
-
-const LEADERBOARD_KEY = 'trench_survivors_leaderboard_v2'; // Use a new key to avoid conflicts with old structure
+const LEADERBOARD_KEY = 'trench_survivors_leaderboard_v2';
 const USER_KEY_PREFIX = 'trench_survivors_user_v2:';
 
 /**
- * Retrieves the leaderboard from Upstash Redis.
+ * Retrieves the leaderboard from Vercel KV.
  * @returns A promise that resolves to a sorted array of ScoreEntry objects.
  */
 export const getLeaderboard = async (): Promise<ScoreEntry[]> => {
-    if (!redis) return [];
     try {
-        // Fetch top 100 usernames and their scores
-        const leaderboardData = await redis.zrange(LEADERBOARD_KEY, 0, 99, { withScores: true, rev: true });
+        // Fetch top 100 usernames and their scores from the sorted set.
+        const leaderboardData = await kv.zrange(LEADERBOARD_KEY, 0, 99, { withScores: true, rev: true });
 
         const scores: ScoreEntry[] = [];
-        if (leaderboardData.length === 0) return [];
+        if (!leaderboardData || leaderboardData.length === 0) {
+            return [];
+        }
         
-        // Batch user data fetching
-        const pipeline = redis.pipeline();
+        // Prepare to fetch metadata for all users in parallel.
+        const userPromises: Promise<Record<string, unknown> | null>[] = [];
         for (let i = 0; i < leaderboardData.length; i += 2) {
             const username = leaderboardData[i] as string;
-            pipeline.hgetall(`${USER_KEY_PREFIX}${username}`);
+            userPromises.push(kv.hgetall(`${USER_KEY_PREFIX}${username}`));
         }
-        const usersDataResults = (await pipeline.exec()) as (Record<string, string> | null | Error)[];
+        const usersDataResults = await Promise.all(userPromises);
 
+        // Combine the scores with the user metadata.
         for (let i = 0; i < usersDataResults.length; i++) {
             const username = leaderboardData[i * 2] as string;
             const score = leaderboardData[i * 2 + 1] as number;
-            const userDataResult = usersDataResults[i];
-
-            if (userDataResult instanceof Error) {
-                console.error(`Failed to fetch data for user ${username}`, userDataResult);
-                continue; // Skip entries that failed to load
-            }
-            
-            const userData = userDataResult;
+            const userData = usersDataResults[i];
 
             scores.push({
                 username,
                 score,
-                avatarUrl: userData?.avatarUrl,
-                date: userData?.date || new Date().toISOString(),
+                avatarUrl: userData?.avatarUrl as string | undefined,
+                date: (userData?.date as string) || new Date().toISOString(),
             });
         }
         
         return scores;
     } catch (error) {
-        console.error("Failed to retrieve leaderboard from Upstash Redis", error);
+        console.error("Failed to retrieve leaderboard from Vercel KV", error);
         return [];
     }
 };
 
 /**
- * Adds or updates a score for a user in the Upstash Redis leaderboard.
+ * Adds or updates a score for a user in the Vercel KV leaderboard.
  * @param user The current user object containing username and avatarUrl.
  * @param score The market cap score from the game.
  * @returns A promise that resolves to a boolean indicating if a new high score was saved.
  */
 export const addScore = async (user: CurrentUser, score: number): Promise<boolean> => {
-    if (!redis) return false;
-    if (!user || !user.username.trim()) return false;
+    if (!user || !user.username.trim()) {
+        return false;
+    }
 
     try {
         const username = user.username;
-        const existingScore = await redis.zscore(LEADERBOARD_KEY, username);
+        const existingScore = await kv.zscore(LEADERBOARD_KEY, username);
         let isNewHighScore = false;
 
+        // Only update if the new score is higher.
         if (existingScore === null || score > existingScore) {
-            const pipeline = redis.pipeline();
+            const pipeline = kv.pipeline();
             
-            // Add/update score in the sorted set
+            // Add/update score in the sorted set.
             pipeline.zadd(LEADERBOARD_KEY, { score, member: username });
 
-            // Store/update user metadata in a hash
+            // Store/update user metadata in a hash.
             pipeline.hset(`${USER_KEY_PREFIX}${username}`, {
                 avatarUrl: user.avatarUrl,
                 date: new Date().toISOString(),
@@ -104,7 +85,7 @@ export const addScore = async (user: CurrentUser, score: number): Promise<boolea
 
         return isNewHighScore;
     } catch (error) {
-        console.error("Failed to save score to Upstash Redis", error);
+        console.error("Failed to save score to Vercel KV", error);
         return false;
     }
 };
