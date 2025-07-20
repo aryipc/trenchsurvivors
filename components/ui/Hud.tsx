@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { Player, ItemType, GameStatus, WeaponType } from '../../types';
 import { ITEM_DATA, CROCODILE_ICON } from '../../constants';
@@ -119,9 +118,14 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
             {isTouch && heldItem?.type === ItemType.Candle && heldItem.variant && (
                  <div
                     className="absolute bottom-[124px] right-12 z-50"
-                    onTouchStart={(e) => { e.preventDefault(); onUseItem(); }}
+                    onPointerDown={(e) => { 
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onUseItem(); 
+                    }}
                     role="button"
                     aria-label="Use Item"
+                    style={{ pointerEvents: 'auto' }}
                  >
                     <div className="w-24 h-24 bg-gray-800/80 border-4 border-yellow-300 rounded-full shadow-lg flex items-center justify-center active:bg-yellow-400/50">
                         <img
