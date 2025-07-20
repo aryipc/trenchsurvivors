@@ -1,4 +1,5 @@
 
+
 export enum GameStatus {
     NotStarted,
     Playing,
@@ -6,6 +7,7 @@ export enum GameStatus {
     LevelUp,
     GameOver,
     BossFight,
+    Leaderboard,
 }
 
 export enum WeaponType {
@@ -154,6 +156,11 @@ export interface ActiveCandle {
 
 export type ActiveItem = ActiveCandle;
 
+export interface CurrentUser {
+    username: string;
+    avatarUrl: string;
+}
+
 export interface GameState {
     status: GameStatus;
     player: Player;
@@ -178,6 +185,8 @@ export interface GameState {
         rangedAttackTimer: number;
     } | null;
     bossHasBeenDefeated: boolean;
+    currentUser: CurrentUser | null;
+    isNewHighScore: boolean;
 }
 
 export interface UpgradeOption {
@@ -185,6 +194,13 @@ export interface UpgradeOption {
     name: string;
     level: number;
     isNew: boolean;
+}
+
+export interface ScoreEntry {
+    username: string;
+    avatarUrl?: string; // Optional for backward compatibility
+    score: number;
+    date: string;
 }
 
 export interface WeaponData {

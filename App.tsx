@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import GameScreen from './components/GameScreen';
 import { Hud } from './components/ui/Hud';
@@ -6,12 +8,15 @@ import LevelUpModal from './components/ui/LevelUpModal';
 import GameOverScreen from './components/ui/GameOverScreen';
 import StartScreen from './components/ui/StartScreen';
 import VirtualJoystick from './components/ui/VirtualJoystick';
+import LeaderboardScreen from './components/ui/LeaderboardScreen';
 import { useGameLoop } from './hooks/useGameLoop';
 import { useTouchControls } from './hooks/useTouch';
-import { GameState, Player, Enemy, Projectile, ExperienceGem, GameStatus, WeaponType, Weapon, UpgradeOption, FloatingText, EnemyType, Airdrop, VisualEffect, LaserBeam, ItemDrop, ActiveItem, ActiveCandle, CandleVariant, ItemType } from './types';
+import { GameState, Player, Enemy, Projectile, ExperienceGem, GameStatus, WeaponType, Weapon, UpgradeOption, FloatingText, EnemyType, Airdrop, VisualEffect, LaserBeam, ItemDrop, ActiveItem, ActiveCandle, CandleVariant, ItemType, ScoreEntry, CurrentUser } from './types';
 import { WEAPON_DATA, ENEMY_DATA, LEVEL_THRESHOLDS, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, ITEM_DROP_CHANCE, ITEM_DATA, BOSS_SPAWN_MC, MC_PER_SECOND, STARTING_MC, MC_VOLATILITY_INTERVAL, MC_VOLATILITY_AMOUNT, BOSS_RANGED_ATTACK_COOLDOWN, BOSS_RANGED_ATTACK_DAMAGE, BOSS_RANGED_ATTACK_SPEED, BOSS_PROJECTILE_WIDTH, BOSS_PROJECTILE_HEIGHT } from './constants';
 import { getUpgradeOptions } from './utils/upgradeHelper';
 import { generateBatchDescriptions } from './services/geminiService';
+import { getLeaderboard, addScore } from './services/leaderboardService';
+
 
 const App: React.FC = () => {
     const [gameState, setGameState] = useState<GameState>(() => {
@@ -51,15 +56,18 @@ const App: React.FC = () => {
             orbitAngle: 0,
             bossState: null,
             bossHasBeenDefeated: false,
+            currentUser: null,
+            isNewHighScore: false,
         };
     });
 
     const [upgradeOptions, setUpgradeOptions] = useState<UpgradeOption[]>([]);
     const [descriptions, setDescriptions] = useState<Record<string, string>>({});
     const [loadingDescriptions, setLoadingDescriptions] = useState(false);
+    const [leaderboard, setLeaderboard] = useState<ScoreEntry[]>([]);
     const { isTouch, handleJoystickMove, handleUseItem } = useTouchControls();
 
-    const resetGame = () => {
+    const handleStartGame = (user: CurrentUser | null) => {
         const initialPlayer: Player = {
             id: 'player',
             x: GAME_AREA_WIDTH / 2,
@@ -96,7 +104,18 @@ const App: React.FC = () => {
             orbitAngle: 0,
             bossState: null,
             bossHasBeenDefeated: false,
+            currentUser: user,
+            isNewHighScore: false,
         });
+    };
+
+    const handleShowLeaderboard = () => {
+        setLeaderboard(getLeaderboard());
+        setGameState(prev => ({ ...prev, status: GameStatus.Leaderboard }));
+    };
+
+    const handleBackToMenu = () => {
+        setGameState(prev => ({ ...prev, status: GameStatus.NotStarted, isNewHighScore: false }));
     };
 
     const handleLevelUp = useCallback((isFromDebugButton: boolean = false) => {
@@ -154,6 +173,7 @@ const App: React.FC = () => {
 
             let { player, enemies, projectiles, gems, floatingTexts, airdrops, visualEffects, itemDrops, activeItems, gameTime, marketCap, kills, orbitAngle, activeLaser, bossState, bossHasBeenDefeated } = JSON.parse(JSON.stringify(prev));
             let currentStatus: GameStatus = prev.status;
+            let isNewHighScore = false;
             gameTime += delta;
             
             const botData = WEAPON_DATA[WeaponType.TradingBot];
@@ -601,6 +621,9 @@ const App: React.FC = () => {
 
             // --- GAME STATE CHECKS ---
             if (player.health <= 0 || (prev.status === GameStatus.BossFight && marketCap <= STARTING_MC)) {
+                if (prev.currentUser) {
+                    isNewHighScore = addScore(prev.currentUser, marketCap);
+                }
                 currentStatus = GameStatus.GameOver;
             }
 
@@ -631,6 +654,7 @@ const App: React.FC = () => {
                 activeLaser, 
                 bossState,
                 bossHasBeenDefeated,
+                isNewHighScore,
                 camera: { x: player.x - window.innerWidth / 2, y: player.y - window.innerHeight / 2 }
             };
         });
@@ -649,9 +673,17 @@ const App: React.FC = () => {
     const renderGameContent = () => {
         switch (gameState.status) {
             case GameStatus.NotStarted:
-                return <StartScreen onStart={resetGame} />;
+                return <StartScreen onStart={handleStartGame} onShowLeaderboard={handleShowLeaderboard} />;
+            case GameStatus.Leaderboard:
+                return <LeaderboardScreen scores={leaderboard} onBack={handleBackToMenu} />;
             case GameStatus.GameOver:
-                return <GameOverScreen score={gameState.kills} marketCap={gameState.marketCap} onRestart={resetGame} />;
+                return <GameOverScreen 
+                            score={gameState.kills} 
+                            marketCap={gameState.marketCap} 
+                            onRestart={() => handleStartGame(gameState.currentUser)}
+                            isNewHighScore={gameState.isNewHighScore}
+                            username={gameState.currentUser}
+                        />;
             case GameStatus.Playing:
             case GameStatus.BossFight:
             case GameStatus.LevelUp:
@@ -667,18 +699,7 @@ const App: React.FC = () => {
                             onUseItem={handleUseItem}
                         />
                         <GameScreen gameState={gameState} />
-
-                        {!isTouch && gameState.status !== GameStatus.LevelUp && (
-                             <button
-                                onClick={() => handleLevelUp(true)}
-                                className="absolute bottom-4 right-4 bg-yellow-500 text-black font-bold py-2 px-4 rounded z-50 hover:bg-yellow-400 transition-colors"
-                                aria-label="Trigger Level Up for testing"
-                            >
-                                Level Up (Debug)
-                            </button>
-                        )}
                        
-
                         {gameState.status === GameStatus.LevelUp && (
                             <LevelUpModal
                                 options={upgradeOptions}
