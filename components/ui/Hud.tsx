@@ -119,7 +119,7 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
             {isTouch && heldItem?.type === ItemType.Candle && heldItem.variant && (
                  <div className="absolute bottom-[124px] right-12 z-50">
                     <button
-                        onClick={onUseItem}
+                        onPointerDown={(e) => { e.preventDefault(); onUseItem(); }}
                         className="w-24 h-24 bg-gray-800/80 border-4 border-yellow-300 rounded-full shadow-lg flex items-center justify-center active:bg-yellow-400/50"
                         aria-label="Use Item"
                     >
