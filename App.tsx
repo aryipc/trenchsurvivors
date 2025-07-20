@@ -48,6 +48,7 @@ const App: React.FC = () => {
             activeLaser: null,
             gameTime: 0,
             marketCap: STARTING_MC,
+            maxBalanceAchieved: initialPlayer.health,
             kills: 0,
             camera: { x: initialPlayer.x - window.innerWidth / 2, y: initialPlayer.y - window.innerHeight / 2 },
             orbitAngle: 0,
@@ -146,6 +147,7 @@ const App: React.FC = () => {
             activeLaser: null,
             gameTime: 0,
             marketCap: STARTING_MC,
+            maxBalanceAchieved: initialPlayer.health,
             kills: 0,
             camera: { x: initialPlayer.x - window.innerWidth / 2, y: initialPlayer.y - window.innerHeight / 2 },
             orbitAngle: 0,
@@ -565,7 +567,7 @@ const App: React.FC = () => {
                         }
                     });
                 } else if (p.owner === 'enemy') {
-                    const dx = player.x - p.x; const dy = player.y - p.y; const dist = Math.sqrt(dx * dx + dy * dy);
+                    const dx = player.x - p.x; const dy = player.y - p.y; const dist = Math.sqrt(player.width / 2 + p.width / 2);
                     if (dist < player.width / 2 + p.width / 2) {
                         player.health -= p.damage;
                         addFloatingText(p.damage.toString(), player.x, player.y - 20, '#ef4444');
@@ -692,6 +694,8 @@ const App: React.FC = () => {
                 if (needsLevelUp) handleLevelUp();
             }
 
+            const newMaxBalanceAchieved = Math.max(prev.maxBalanceAchieved, player.health);
+
             return {
                 ...prev, 
                 status: currentStatus, 
@@ -706,6 +710,7 @@ const App: React.FC = () => {
                 activeItems, 
                 gameTime, 
                 marketCap: Math.max(marketCap, STARTING_MC), // Clamp final market cap
+                maxBalanceAchieved: newMaxBalanceAchieved,
                 kills, 
                 orbitAngle, 
                 activeLaser, 
@@ -722,7 +727,7 @@ const App: React.FC = () => {
         // Post score to leaderboard when game is over
         if (gameState.status === GameStatus.GameOver && gameState.currentUser && !gameState.isNewHighScore) {
             const postScore = async () => {
-                const newHighScore = await addScore(gameState.currentUser!, gameState.marketCap);
+                const newHighScore = await addScore(gameState.currentUser!, gameState.marketCap, gameState.maxBalanceAchieved);
                 // Only update state if the component is still mounted and the game is over
                 setGameState(prev => {
                     if (prev.status === GameStatus.GameOver) {
@@ -733,7 +738,7 @@ const App: React.FC = () => {
             };
             postScore();
         }
-    }, [gameState.status, gameState.marketCap, gameState.currentUser, gameState.isNewHighScore]);
+    }, [gameState.status, gameState.marketCap, gameState.currentUser, gameState.isNewHighScore, gameState.maxBalanceAchieved]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => { (window as any).pressedKeys = (window as any).pressedKeys || {}; if ((window as any).pressedKeys[e.key] !== true) (window as any).pressedKeys[e.key] = true; };
@@ -796,7 +801,10 @@ const App: React.FC = () => {
     };
 
     return (
-        <div className="relative w-screen h-screen overflow-hidden bg-gray-800 text-white select-none">
+        <div 
+            className="relative w-screen h-screen overflow-hidden bg-gray-800 text-white select-none"
+            style={{ touchAction: 'none' }}
+        >
             {renderGameContent()}
             {isTouch && (gameState.status === GameStatus.Playing || gameState.status === GameStatus.BossFight) && (
                 <VirtualJoystick onMove={handleJoystickMove} />

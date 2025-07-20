@@ -1,5 +1,6 @@
 
 
+
 export enum GameStatus {
     NotStarted,
     Playing,
@@ -176,6 +177,7 @@ export interface GameState {
     activeLaser: LaserBeam | null;
     gameTime: number;
     marketCap: number;
+    maxBalanceAchieved: number;
     kills: number;
     camera: { x: number; y: number; };
     orbitAngle: number;
@@ -201,6 +203,7 @@ export interface ScoreEntry {
     username: string;
     avatarUrl?: string; // Optional for backward compatibility
     score: number;
+    maxBalance: number;
     date: string;
 }
 

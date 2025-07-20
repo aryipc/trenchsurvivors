@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { ScoreEntry } from '../../types';
 
@@ -28,6 +29,11 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ scores, onBack, l
         return `$${Math.floor(value).toLocaleString()}`;
     };
 
+    const formatBalance = (value: number) => {
+        if (typeof value !== 'number') return '0 U';
+        return `${Math.floor(value).toLocaleString()} U`;
+    };
+
     const formatDate = (dateString: string) => {
         try {
             // Displaying date and time down to the minute.
@@ -45,7 +51,7 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ scores, onBack, l
 
     return (
         <div className="absolute inset-0 bg-gray-900 flex flex-col items-center z-30 text-white p-2 pt-12 md:p-4 md:pt-16 overflow-y-auto" style={{ touchAction: 'pan-y' }}>
-            <div className="w-full max-w-3xl">
+            <div className="w-full max-w-4xl">
                 <h1 className="text-5xl md:text-6xl font-cinzel text-yellow-300 mb-6 text-center drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">High Scores</h1>
                 
                 <div className="bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg max-h-[60vh] min-h-[20vh] overflow-y-auto" style={{ touchAction: 'pan-y' }}>
@@ -58,6 +64,7 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ scores, onBack, l
                                     <th className="p-2 md:p-4 font-bold text-green-400 text-center w-14">Rank</th>
                                     <th className="p-2 md:p-4 font-bold text-green-400">Handle</th>
                                     <th className="p-2 md:p-4 font-bold text-green-400 text-right w-24 md:w-28">Top MC</th>
+                                    <th className="p-2 md:p-4 font-bold text-green-400 text-right w-24 md:w-28">Top Balance</th>
                                     <th className="p-2 md:p-4 font-bold text-green-400 text-right w-[70px] md:w-24">Date</th>
                                 </tr>
                             </thead>
@@ -76,6 +83,7 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ scores, onBack, l
                                             </div>
                                         </td>
                                         <td className="p-2 md:p-4 text-sm md:text-base text-yellow-300 font-mono text-right align-middle">{formatMarketCap(entry.score)}</td>
+                                        <td className="p-2 md:p-4 text-sm md:text-base text-green-400 font-mono text-right align-middle">{formatBalance(entry.maxBalance)}</td>
                                         <td className="p-2 md:p-4 text-xs md:text-sm text-gray-400 text-right align-middle">{formatDate(entry.date)}</td>
                                     </tr>
                                 ))}

@@ -7,6 +7,7 @@ interface ScoreEntry {
     username: string;
     avatarUrl?: string;
     score: number;
+    maxBalance: number;
     date: string;
 }
 
@@ -50,6 +51,7 @@ const getLeaderboardFromKV = async (): Promise<ScoreEntry[]> => {
                 username,
                 score,
                 avatarUrl: userData?.avatarUrl,
+                maxBalance: userData?.maxBalance || 0,
                 date: userData?.date || new Date().toISOString(),
             });
         }
@@ -62,7 +64,7 @@ const getLeaderboardFromKV = async (): Promise<ScoreEntry[]> => {
 };
 
 // This function also runs on the server.
-const addScoreToKV = async (user: CurrentUser, score: number): Promise<boolean> => {
+const addScoreToKV = async (user: CurrentUser, score: number, maxBalance: number): Promise<boolean> => {
     if (!user || !user.username || !user.username.trim() || typeof score !== 'number') {
         return false;
     }
@@ -80,6 +82,7 @@ const addScoreToKV = async (user: CurrentUser, score: number): Promise<boolean> 
         pipeline.hset(`${USER_KEY_PREFIX}${username}`, {
             avatarUrl: user.avatarUrl,
             date: new Date().toISOString(),
+            maxBalance: maxBalance,
         });
         await pipeline.exec();
         
@@ -116,11 +119,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'POST') {
         try {
-            const { user, score } = req.body;
-            if (!user || typeof score !== 'number') {
-                return res.status(400).json({ error: 'Invalid request: "user" and "score" are required.' });
+            const { user, score, maxBalance } = req.body;
+            if (!user || typeof score !== 'number' || typeof maxBalance !== 'number') {
+                return res.status(400).json({ error: 'Invalid request: "user", "score", and "maxBalance" are required.' });
             }
-            const isNewHighScore = await addScoreToKV(user, score);
+            const isNewHighScore = await addScoreToKV(user, score, maxBalance);
             return res.status(200).json({ success: true, newHighScore: isNewHighScore });
         } catch (error) {
             console.error("API Error adding score:", error);
