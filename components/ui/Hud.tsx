@@ -119,12 +119,12 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
                  <button
                     type="button"
                     className="absolute bottom-[124px] right-12 z-50 w-24 h-24 bg-gray-800/80 border-4 border-yellow-300 rounded-full shadow-lg flex items-center justify-center active:bg-yellow-400/50 p-0 appearance-none"
-                    onPointerDown={(e) => { 
-                        e.preventDefault();
+                    onClick={(e) => {
                         e.stopPropagation();
-                        onUseItem(); 
+                        onUseItem();
                     }}
                     aria-label="Use Item"
+                    // Adding touch-action none is still good practice to prevent the browser from interfering.
                     style={{ touchAction: 'none' }}
                  >
                     <img
