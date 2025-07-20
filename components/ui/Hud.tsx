@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Player, ItemType, GameStatus } from '../../types';
 import { ITEM_DATA } from '../../constants';
 
@@ -17,6 +17,28 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
     const healthPercentage = (health / maxHealth) * 100;
     const xpPercentage = (xp / xpToNextLevel) * 100;
     
+    const skillButtonRef = useRef<HTMLButtonElement>(null);
+
+    // Add useEffect to handle skill button press with a native event listener for reliability
+    useEffect(() => {
+        const button = skillButtonRef.current;
+        if (!button) return;
+
+        const handlePress = (e: PointerEvent) => {
+            // Prevent default browser actions like text selection or context menu on long press
+            e.preventDefault();
+            onUseItem();
+        };
+
+        button.addEventListener('pointerdown', handlePress);
+
+        // Cleanup
+        return () => {
+            button.removeEventListener('pointerdown', handlePress);
+        };
+    }, [onUseItem]);
+
+
     const formatMarketCap = (value: number) => {
         return `$${Math.floor(value).toLocaleString()}`;
     };
@@ -82,17 +104,15 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
             {isTouch && heldItem?.type === ItemType.Candle && heldItem.variant && (
                  <div className="absolute bottom-[124px] right-12 z-50">
                     <button
-                        onPointerDown={(e) => {
-                            e.preventDefault();
-                            onUseItem();
-                        }}
+                        ref={skillButtonRef}
                         className="w-24 h-24 bg-gray-800/80 border-4 border-yellow-300 rounded-full shadow-lg flex items-center justify-center active:bg-yellow-400/50"
                         aria-label="Use Item"
+                        style={{ touchAction: 'none' }}
                     >
                         <img
                             src={ITEM_DATA[ItemType.Candle].svg}
                             alt={ITEM_DATA[ItemType.Candle].variants![heldItem.variant].name}
-                            className="h-14 w-auto"
+                            className="h-14 w-auto pointer-events-none"
                             style={{ filter: 'drop-shadow(0 0 5px #10B981)'}}
                         />
                     </button>
