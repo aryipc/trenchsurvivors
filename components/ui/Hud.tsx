@@ -80,7 +80,7 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
 
             {/* Mobile Action Button */}
             {isTouch && heldItem?.type === ItemType.Candle && heldItem.variant && (
-                 <div className="absolute bottom-12 right-12 z-50">
+                 <div className="absolute bottom-[60px] right-12 z-50">
                     <button
                         onTouchStart={(e) => {
                             e.preventDefault();

@@ -93,7 +93,7 @@ const VirtualJoystick: React.FC<VirtualJoystickProps> = ({ onMove }) => {
     return (
         <div 
             ref={baseRef}
-            className="fixed bottom-12 left-12 z-50 rounded-full bg-gray-500/30 flex justify-center items-center select-none"
+            className="absolute bottom-12 left-12 z-50 rounded-full bg-gray-500/30 flex justify-center items-center select-none"
             style={{ width: `${baseSize}px`, height: `${baseSize}px` }}
             onTouchStart={handleTouchStart}
         >

@@ -3,9 +3,9 @@ import { ScoreEntry, CurrentUser } from '../types';
 
 let redis: Redis | null = null;
 try {
-    // Look for Upstash Redis or Vercel KV environment variables.
-    const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
-    const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+    // Be robust: check for Vercel KV, Vercel Redis, and standard Upstash variables.
+    const url = process.env.KV_REST_API_URL || process.env.KV_URL || process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL;
+    const token = process.env.KV_REST_API_TOKEN || process.env.REDIS_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
     if (url && token) {
         redis = new Redis({
@@ -14,7 +14,7 @@ try {
         });
         console.log("Successfully initialized Redis client for leaderboard.");
     } else {
-        console.warn('Redis environment variables (UPSTASH_... or KV_...) not set. Leaderboard will be disabled.');
+        console.warn('Leaderboard is disabled. Could not find Vercel KV/Redis or Upstash environment variables.');
     }
 } catch (e) {
     console.error("Could not initialize Redis client:", e);

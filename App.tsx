@@ -64,6 +64,54 @@ const App: React.FC = () => {
     const [leaderboard, setLeaderboard] = useState<ScoreEntry[]>([]);
     const [leaderboardLoading, setLeaderboardLoading] = useState(false);
     const { isTouch, handleJoystickMove, handleUseItem } = useTouchControls();
+    const [pausedFromStatus, setPausedFromStatus] = useState<GameStatus | null>(null);
+
+    // Effect for handling game pause/resume on tab visibility/focus change
+    useEffect(() => {
+        const pauseGame = () => {
+            setGameState(prev => {
+                // Only pause if the game is actively running and not already paused by other means (like level up)
+                if (prev.status === GameStatus.Playing || prev.status === GameStatus.BossFight) {
+                    setPausedFromStatus(prev.status);
+                    return { ...prev, status: GameStatus.Paused };
+                }
+                return prev;
+            });
+        };
+
+        const resumeGame = () => {
+            setGameState(prev => {
+                // Only resume if it was paused by this specific blur/visibility logic
+                if (prev.status === GameStatus.Paused && pausedFromStatus) {
+                    const statusToResume = pausedFromStatus;
+                    setPausedFromStatus(null);
+                    return { ...prev, status: statusToResume };
+                }
+                return prev;
+            });
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                pauseGame();
+            } else {
+                // On some systems, focus fires before visibilitychange.
+                // Resuming here ensures we catch the user coming back to the tab.
+                resumeGame();
+            }
+        };
+
+        window.addEventListener('blur', pauseGame);
+        window.addEventListener('focus', resumeGame);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            window.removeEventListener('blur', pauseGame);
+            window.removeEventListener('focus', resumeGame);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [pausedFromStatus]);
+
 
     const handleStartGame = (user: CurrentUser | null) => {
         const initialPlayer: Player = {
@@ -733,6 +781,14 @@ const App: React.FC = () => {
                                 descriptions={descriptions}
                                 loading={loadingDescriptions}
                             />
+                        )}
+
+                        {gameState.status === GameStatus.Paused && (
+                            <div className="absolute inset-0 bg-black/60 flex justify-center items-center z-50 backdrop-blur-sm">
+                                <h2 className="text-7xl font-cinzel text-yellow-300 text-shadow animate-pulse">
+                                    PAUSED
+                                </h2>
+                            </div>
                         )}
                     </>
                 );
