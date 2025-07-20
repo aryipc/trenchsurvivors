@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 
 interface VirtualJoystickProps {
     onMove: (vector: { x: number; y: number }) => void;
@@ -8,8 +8,7 @@ interface VirtualJoystickProps {
 const VirtualJoystick: React.FC<VirtualJoystickProps> = ({ onMove }) => {
     const baseRef = useRef<HTMLDivElement>(null);
     const stickRef = useRef<HTMLDivElement>(null);
-    const [isDragging, setIsDragging] = useState(false);
-    const [touchId, setTouchId] = useState<number | null>(null);
+    const pointerIdRef = useRef<number | null>(null);
 
     const baseSize = 120;
     const stickSize = 60;
@@ -40,62 +39,56 @@ const VirtualJoystick: React.FC<VirtualJoystickProps> = ({ onMove }) => {
         if (stickRef.current) {
             stickRef.current.style.transform = 'translate(0px, 0px)';
         }
-        setIsDragging(false);
-        setTouchId(null);
+        pointerIdRef.current = null;
         onMove({ x: 0, y: 0 });
     }, [onMove]);
 
-    const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-        const touch = e.changedTouches[0];
-        if (touch) {
-            setIsDragging(true);
-            setTouchId(touch.identifier);
-            updateStickPosition(touch.clientX, touch.clientY);
-        }
+    const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        if (pointerIdRef.current !== null) return;
+        
+        (e.target as Element).setPointerCapture(e.pointerId);
+        pointerIdRef.current = e.pointerId;
+        updateStickPosition(e.clientX, e.clientY);
     };
 
-    const handleTouchMove = useCallback((e: TouchEvent) => {
-        if (!isDragging) return;
-        for (let i = 0; i < e.changedTouches.length; i++) {
-            const touch = e.changedTouches[i];
-            if (touch.identifier === touchId) {
-                updateStickPosition(touch.clientX, touch.clientY);
-                break;
-            }
-        }
-    }, [isDragging, touchId, updateStickPosition]);
+    const handlePointerMove = useCallback((e: PointerEvent) => {
+        if (pointerIdRef.current !== e.pointerId) return;
+        e.preventDefault();
+        updateStickPosition(e.clientX, e.clientY);
+    }, [updateStickPosition]);
     
-    const handleTouchEnd = useCallback((e: TouchEvent) => {
-        if (!isDragging) return;
-        for (let i = 0; i < e.changedTouches.length; i++) {
-            const touch = e.changedTouches[i];
-            if (touch.identifier === touchId) {
-                resetStick();
-                break;
-            }
-        }
-    }, [isDragging, touchId, resetStick]);
+    const handlePointerUp = useCallback((e: PointerEvent) => {
+        if (pointerIdRef.current !== e.pointerId) return;
+        e.preventDefault();
+        // The element that captured the pointer is the one that will be the target
+        // for the pointerup event, even if the cursor has moved elsewhere.
+        (e.target as Element).releasePointerCapture(e.pointerId);
+        resetStick();
+    }, [resetStick]);
 
     useEffect(() => {
-        if (isDragging) {
-            window.addEventListener('touchmove', handleTouchMove);
-            window.addEventListener('touchend', handleTouchEnd);
-            window.addEventListener('touchcancel', handleTouchEnd);
-        }
+        window.addEventListener('pointermove', handlePointerMove);
+        window.addEventListener('pointerup', handlePointerUp);
+        window.addEventListener('pointercancel', handlePointerUp);
         
         return () => {
-            window.removeEventListener('touchmove', handleTouchMove);
-            window.removeEventListener('touchend', handleTouchEnd);
-            window.removeEventListener('touchcancel', handleTouchEnd);
+            window.removeEventListener('pointermove', handlePointerMove);
+            window.removeEventListener('pointerup', handlePointerUp);
+            window.removeEventListener('pointercancel', handlePointerUp);
         };
-    }, [isDragging, handleTouchMove, handleTouchEnd]);
+    }, [handlePointerMove, handlePointerUp]);
 
     return (
         <div 
             ref={baseRef}
             className="absolute bottom-28 left-12 z-50 rounded-full bg-gray-500/30 flex justify-center items-center select-none"
-            style={{ width: `${baseSize}px`, height: `${baseSize}px` }}
-            onTouchStart={handleTouchStart}
+            style={{ 
+                width: `${baseSize}px`, 
+                height: `${baseSize}px`,
+                touchAction: 'none' // Essential for pointer events on touch devices
+            }}
+            onPointerDown={handlePointerDown}
         >
             <div
                 ref={stickRef}
