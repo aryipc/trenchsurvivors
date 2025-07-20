@@ -116,26 +116,24 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
 
             {/* Mobile Action Button */}
             {isTouch && heldItem?.type === ItemType.Candle && heldItem.variant && (
-                 <div
-                    className="absolute bottom-[124px] right-12 z-50"
+                 <button
+                    type="button"
+                    className="absolute bottom-[124px] right-12 z-50 w-24 h-24 bg-gray-800/80 border-4 border-yellow-300 rounded-full shadow-lg flex items-center justify-center active:bg-yellow-400/50 p-0 appearance-none"
                     onPointerDown={(e) => { 
                         e.preventDefault();
                         e.stopPropagation();
                         onUseItem(); 
                     }}
-                    role="button"
                     aria-label="Use Item"
-                    style={{ pointerEvents: 'auto', touchAction: 'none' }}
+                    style={{ touchAction: 'none' }}
                  >
-                    <div className="w-24 h-24 bg-gray-800/80 border-4 border-yellow-300 rounded-full shadow-lg flex items-center justify-center active:bg-yellow-400/50">
-                        <img
-                            src={ITEM_DATA[ItemType.Candle].svg}
-                            alt={ITEM_DATA[ItemType.Candle].variants![heldItem.variant].name}
-                            className="h-14 w-auto pointer-events-none"
-                            style={{ filter: 'drop-shadow(0 0 5px #10B981)'}}
-                        />
-                    </div>
-                </div>
+                    <img
+                        src={ITEM_DATA[ItemType.Candle].svg}
+                        alt={ITEM_DATA[ItemType.Candle].variants![heldItem.variant].name}
+                        className="h-14 w-auto pointer-events-none"
+                        style={{ filter: 'drop-shadow(0 0 5px #10B981)'}}
+                    />
+                </button>
             )}
         </>
     );
