@@ -1,6 +1,7 @@
 
 
 
+
 export enum GameStatus {
     NotStarted,
     Playing,
@@ -190,6 +191,7 @@ export interface GameState {
     bossHasBeenDefeated: boolean;
     currentUser: CurrentUser | null;
     isNewHighScore: boolean;
+    lastSkillUsed: { id: string, name: string; life: number } | null;
 }
 
 export interface UpgradeOption {

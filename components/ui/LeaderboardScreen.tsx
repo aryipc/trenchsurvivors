@@ -95,6 +95,7 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ scores, onBack, l
                 </div>
 
                 <div className="mt-6 text-center">
+                    <p className="text-xs text-gray-500 mb-4 px-4">Note: X avatars are based on user-provided handles and may not represent the actual account holder.</p>
                     <button
                         onClick={onBack}
                         className="bg-green-500 text-gray-900 font-bold py-3 px-10 rounded-lg text-xl font-cinzel hover:bg-green-400 transition-colors transform hover:scale-105"

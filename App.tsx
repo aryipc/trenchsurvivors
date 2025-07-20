@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import GameScreen from './components/GameScreen';
 import { Hud } from './components/ui/Hud';
@@ -56,6 +58,7 @@ const App: React.FC = () => {
             bossHasBeenDefeated: false,
             currentUser: null,
             isNewHighScore: false,
+            lastSkillUsed: null,
         };
     });
 
@@ -155,6 +158,7 @@ const App: React.FC = () => {
             bossHasBeenDefeated: false,
             currentUser: user,
             isNewHighScore: false,
+            lastSkillUsed: null,
         });
     };
 
@@ -223,10 +227,17 @@ const App: React.FC = () => {
         setGameState(prev => {
             if (prev.status !== GameStatus.Playing && prev.status !== GameStatus.BossFight) return prev;
 
-            let { player, enemies, projectiles, gems, floatingTexts, airdrops, visualEffects, itemDrops, activeItems, gameTime, marketCap, kills, orbitAngle, activeLaser, bossState, bossHasBeenDefeated, camera } = JSON.parse(JSON.stringify(prev));
+            let { player, enemies, projectiles, gems, floatingTexts, airdrops, visualEffects, itemDrops, activeItems, gameTime, marketCap, kills, orbitAngle, activeLaser, bossState, bossHasBeenDefeated, camera, lastSkillUsed } = JSON.parse(JSON.stringify(prev));
             let currentStatus: GameStatus = prev.status;
             
             gameTime += delta;
+
+            if (lastSkillUsed) {
+                lastSkillUsed.life -= delta;
+                if (lastSkillUsed.life <= 0) {
+                    lastSkillUsed = null;
+                }
+            }
             
             const zoom = isTouch ? 0.75 : 1.0;
 
@@ -297,6 +308,9 @@ const App: React.FC = () => {
                     const variant = player.heldItem.variant;
                     const candleData = ITEM_DATA[ItemType.Candle].variants![variant];
                     const rotations = candleData.rotations || 1;
+                    
+                    lastSkillUsed = { id: `${Date.now()}`, name: candleData.name, life: 2.0 };
+
                     activeItems.push({
                         id: `active_candle_${Date.now()}`,
                         type: ItemType.Candle,
@@ -717,6 +731,7 @@ const App: React.FC = () => {
                 bossState,
                 bossHasBeenDefeated,
                 camera,
+                lastSkillUsed,
             };
         });
     }, [handleLevelUp, isTouch]);
@@ -776,6 +791,7 @@ const App: React.FC = () => {
                             status={gameState.status} 
                             isTouch={isTouch}
                             onUseItem={handleUseItem}
+                            lastSkillUsed={gameState.lastSkillUsed}
                         />
                         <GameScreen gameState={gameState} isTouch={isTouch} />
                        

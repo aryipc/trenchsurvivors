@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Player, ItemType, GameStatus } from '../../types';
 import { ITEM_DATA } from '../../constants';
@@ -10,9 +11,10 @@ interface HudProps {
     status: GameStatus;
     isTouch: boolean;
     onUseItem: () => void;
+    lastSkillUsed: { id: string, name: string; life: number } | null;
 }
 
-export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, onUseItem }) => {
+export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, onUseItem, lastSkillUsed }) => {
     const { health, maxHealth, xp, xpToNextLevel, level, heldItem } = player;
     const healthPercentage = (health / maxHealth) * 100;
     const xpPercentage = (xp / xpToNextLevel) * 100;
@@ -52,6 +54,20 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
                         ></div>
                          <div className="absolute w-full text-center top-1/2 -translate-y-1/2 text-xs font-bold text-shadow">{Math.floor(xp)} / {xpToNextLevel} Hype</div>
                     </div>
+                    
+                    {/* Activated Skill Name */}
+                    <div className="relative h-20 pointer-events-none -mb-4">
+                        {lastSkillUsed && (
+                            <div 
+                                key={lastSkillUsed.id} // Re-triggers animation on new use
+                                className="absolute inset-0 flex items-center justify-center animate-skill-pop"
+                            >
+                                <h3 className="font-cinzel text-5xl text-green-400 text-shadow">
+                                    {lastSkillUsed.name}
+                                </h3>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {status === GameStatus.BossFight && (
@@ -82,10 +98,7 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
             {isTouch && heldItem?.type === ItemType.Candle && heldItem.variant && (
                  <div className="absolute bottom-[124px] right-12 z-50">
                     <button
-                        onPointerDown={(e) => {
-                            e.preventDefault();
-                            onUseItem();
-                        }}
+                        onClick={onUseItem}
                         className="w-24 h-24 bg-gray-800/80 border-4 border-yellow-300 rounded-full shadow-lg flex items-center justify-center active:bg-yellow-400/50"
                         aria-label="Use Item"
                     >
