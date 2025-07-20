@@ -125,7 +125,7 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
                     }}
                     role="button"
                     aria-label="Use Item"
-                    style={{ pointerEvents: 'auto' }}
+                    style={{ pointerEvents: 'auto', touchAction: 'none' }}
                  >
                     <div className="w-24 h-24 bg-gray-800/80 border-4 border-yellow-300 rounded-full shadow-lg flex items-center justify-center active:bg-yellow-400/50">
                         <img
