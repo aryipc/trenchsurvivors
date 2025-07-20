@@ -12,7 +12,8 @@
     "react-dom": "^19.1.0",
     "react": "^19.1.0",
     "@google/genai": "^1.8.0",
-    "@vercel/kv": "^2.0.0"
+    "@vercel/kv": "^3.0.0",
+    "@vercel/node": "^5.3.6"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
