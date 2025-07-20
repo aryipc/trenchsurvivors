@@ -3,21 +3,21 @@ import { ScoreEntry, CurrentUser } from '../types';
 
 let redis: Redis | null = null;
 try {
-    // This assumes UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are available in the environment.
-    const url = process.env.UPSTASH_REDIS_REST_URL;
-    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+    // Look for Upstash Redis or Vercel KV environment variables.
+    const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 
     if (url && token) {
         redis = new Redis({
             url: url.trim(),
             token: token.trim(),
         });
-        console.log("Successfully initialized Upstash Redis client for leaderboard.");
+        console.log("Successfully initialized Redis client for leaderboard.");
     } else {
-        console.warn('Upstash Redis environment variables not set. Leaderboard will be disabled.');
+        console.warn('Redis environment variables (UPSTASH_... or KV_...) not set. Leaderboard will be disabled.');
     }
 } catch (e) {
-    console.error("Could not initialize Upstash Redis client:", e);
+    console.error("Could not initialize Redis client:", e);
 }
 
 const LEADERBOARD_KEY = 'trench_survivors_leaderboard_v2'; // Use a new key to avoid conflicts with old structure
