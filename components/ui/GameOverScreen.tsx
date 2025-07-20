@@ -5,15 +5,20 @@ import { CurrentUser } from '../../types';
 interface GameOverScreenProps {
     score: number;
     marketCap: number;
+    maxBalance: number;
     onRestart: () => void;
     onBackToHome: () => void;
     isNewHighScore: boolean;
     username: CurrentUser | null;
 }
 
-const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, marketCap, onRestart, onBackToHome, isNewHighScore, username }) => {
+const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, marketCap, maxBalance, onRestart, onBackToHome, isNewHighScore, username }) => {
     const formatMarketCap = (value: number) => {
         return `$${Math.floor(value).toLocaleString()}`;
+    };
+
+    const formatBalance = (value: number) => {
+        return `${Math.floor(value).toLocaleString()} U`;
     };
 
     return (
@@ -27,9 +32,10 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, marketCap, onRes
                 </div>
             )}
 
-            <div className="text-center mb-8 text-2xl">
+            <div className="text-center mb-8 text-2xl space-y-2">
                 <p>Final Market Cap: <span className="text-yellow-300 font-bold">{formatMarketCap(marketCap)}</span></p>
-                <p>You flipped <span className="text-yellow-300 font-bold">{score}</span> bears</p>
+                <p>Your Max Balance: <span className="text-green-400 font-bold">{formatBalance(maxBalance)}</span></p>
+                <p>You flipped <span className="text-yellow-300 font-bold">{score}</span> fuds</p>
             </div>
             
             <div className="flex flex-col items-center gap-2">

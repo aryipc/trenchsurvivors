@@ -1,21 +1,15 @@
 
 
+
 import React from 'react';
 import { ScoreEntry } from '../../types';
+import { SHIBA_HELMET_ICON } from '../../constants';
 
 interface LeaderboardScreenProps {
     scores: ScoreEntry[];
     onBack: () => void;
     loading: boolean;
 }
-
-const GuestAvatar = () => (
-    <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-6 md:w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-    </div>
-);
 
 const LoadingSpinner = () => (
     <div className="flex justify-center items-center p-8">
@@ -74,11 +68,11 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ scores, onBack, l
                                         <td className="p-2 md:p-4 text-lg md:text-xl font-bold text-center align-middle">{index + 1}</td>
                                         <td className="p-2 md:p-4 text-base align-middle">
                                             <div className="flex items-center gap-2 md:gap-3">
-                                                {entry.avatarUrl ? (
-                                                    <img src={entry.avatarUrl} alt={entry.username} className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-700 object-cover flex-shrink-0" />
-                                                ) : (
-                                                    <GuestAvatar />
-                                                )}
+                                                <img 
+                                                    src={entry.avatarUrl || SHIBA_HELMET_ICON} 
+                                                    alt={entry.username} 
+                                                    className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-700 object-cover flex-shrink-0" 
+                                                />
                                                 <span className="truncate">{entry.username}</span>
                                             </div>
                                         </td>

@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import GameScreen from './components/GameScreen';
 import { Hud } from './components/ui/Hud';
@@ -10,7 +12,8 @@ import VirtualJoystick from './components/ui/VirtualJoystick';
 import LeaderboardScreen from './components/ui/LeaderboardScreen';
 import { useGameLoop } from './hooks/useGameLoop';
 import { useTouchControls } from './hooks/useTouch';
-import { GameState, Player, Enemy, Projectile, ExperienceGem, GameStatus, WeaponType, Weapon, UpgradeOption, FloatingText, EnemyType, Airdrop, VisualEffect, LaserBeam, ItemDrop, ActiveItem, ActiveCandle, CandleVariant, ItemType, ScoreEntry, CurrentUser } from './types';
+import { useSettings } from './hooks/useSettings';
+import { GameState, Player, Enemy, Projectile, ExperienceGem, GameStatus, WeaponType, Weapon, UpgradeOption, FloatingText, EnemyType, Airdrop, VisualEffect, LaserBeam, ItemDrop, ActiveItem, ActiveCandle, CandleVariant, ItemType, ScoreEntry, CurrentUser, Settings } from './types';
 import { WEAPON_DATA, ENEMY_DATA, LEVEL_THRESHOLDS, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, ITEM_DROP_CHANCE, ITEM_DATA, BOSS_SPAWN_MC, MC_PER_SECOND, STARTING_MC, MC_VOLATILITY_INTERVAL, MC_VOLATILITY_AMOUNT, BOSS_RANGED_ATTACK_COOLDOWN, BOSS_RANGED_ATTACK_DAMAGE, BOSS_RANGED_ATTACK_SPEED, BOSS_PROJECTILE_WIDTH, BOSS_PROJECTILE_HEIGHT } from './constants';
 import { getUpgradeOptions } from './utils/upgradeHelper';
 import { generateBatchDescriptions } from './services/geminiService';
@@ -68,6 +71,7 @@ const App: React.FC = () => {
     const [leaderboard, setLeaderboard] = useState<ScoreEntry[]>([]);
     const [leaderboardLoading, setLeaderboardLoading] = useState(false);
     const { isTouch, handleJoystickMove, handleUseItem } = useTouchControls();
+    const [settings, updateSettings] = useSettings();
     const [pausedFromStatus, setPausedFromStatus] = useState<GameStatus | null>(null);
 
     // Effect for handling game pause/resume on tab visibility/focus change
@@ -238,6 +242,12 @@ const App: React.FC = () => {
                     lastSkillUsed = null;
                 }
             }
+             // --- CAMERA SHAKE ---
+            if (camera.shake && camera.shake.duration > 0) {
+                camera.shake.duration -= delta;
+            } else {
+                camera.shake = undefined;
+            }
             
             const zoom = isTouch ? 0.75 : 1.0;
 
@@ -250,6 +260,7 @@ const App: React.FC = () => {
                 .filter((ft: FloatingText) => ft.life > 0);
 
             const addFloatingText = (text: string, x: number, y: number, color: string = 'white') => {
+                if (!settings.floatingText) return;
                 floatingTexts.push({
                     id: `ft_${Date.now()}_${Math.random()}`,
                     text,
@@ -353,6 +364,7 @@ const App: React.FC = () => {
                 enemies.push({ id: 'boss_cex', type: EnemyType.MigratingBoss, ...bossData, x: player.x, y: player.y - 800, lastHitBy: {} });
                 bossState = { shockwaveTimer: 8, spawnTimer: 5, marketCapVolatilityTimer: MC_VOLATILITY_INTERVAL, rangedAttackTimer: BOSS_RANGED_ATTACK_COOLDOWN };
                 addFloatingText('WARNING: MIGRATING BOSS INBOUND', player.x, player.y - 100, '#ef4444');
+                 if (settings.screenShake) camera.shake = { duration: 2.0, intensity: 10 };
             }
 
             if(currentStatus === GameStatus.BossFight && bossState) {
@@ -401,6 +413,7 @@ const App: React.FC = () => {
                         totalLife: 3.0,
                         color: '#ef4444'
                      });
+                     if (settings.screenShake) camera.shake = { duration: 0.5, intensity: 15 };
                 }
                 if (boss && bossState.spawnTimer <= 0) {
                     bossState.spawnTimer = 5;
@@ -523,6 +536,7 @@ const App: React.FC = () => {
                         }
                     });
                     visualEffects.push({ id: `vfx_${ad.id}`, x: ad.x, y: ad.y, type: 'explosion', radius: ad.radius, life: 0.5, totalLife: 0.5, color: '#FF8C00' });
+                    if (settings.screenShake) camera.shake = { duration: 0.4, intensity: 8 };
                     return false;
                 }
                 return true;
@@ -585,6 +599,7 @@ const App: React.FC = () => {
                     if (dist < player.width / 2 + p.width / 2) {
                         player.health -= p.damage;
                         addFloatingText(p.damage.toString(), player.x, player.y - 20, '#ef4444');
+                        if (settings.screenShake) camera.shake = { duration: 0.2, intensity: 4 };
                         hit = true;
                     }
                 }
@@ -605,6 +620,8 @@ const App: React.FC = () => {
                     const distToPlayer = Math.sqrt(Math.pow(player.x - vfx.x, 2) + Math.pow(player.y - vfx.y, 2));
                     if(Math.abs(distToPlayer - currentRadius) < (player.width / 2 + shockwaveThickness / 2)) {
                         player.health -= 20; // Shockwave damage
+                        addFloatingText('20', player.x, player.y, '#ef4444');
+                        if (settings.screenShake) camera.shake = { duration: 0.3, intensity: 6 };
                     }
                 }
             });
@@ -683,7 +700,10 @@ const App: React.FC = () => {
                     if (Math.random() < ITEM_DROP_CHANCE) itemDrops.push({ id: `item_${e.id}`, x: e.x, y: e.y, type: ItemType.Candle });
                 } else {
                     const dx = player.x - e.x; const dy = player.y - e.y; const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < player.width / 2 + e.width / 2) player.health -= e.damage;
+                    if (dist < player.width / 2 + e.width / 2) {
+                        player.health -= e.damage;
+                        if (settings.screenShake) camera.shake = { duration: 0.2, intensity: 4 };
+                    }
                     newEnemies.push(e);
                 }
             });
@@ -734,7 +754,7 @@ const App: React.FC = () => {
                 lastSkillUsed,
             };
         });
-    }, [handleLevelUp, isTouch]);
+    }, [handleLevelUp, isTouch, settings]);
 
     useGameLoop(gameTick, gameState.status === GameStatus.Playing || gameState.status === GameStatus.BossFight);
 
@@ -766,13 +786,19 @@ const App: React.FC = () => {
     const renderGameContent = () => {
         switch (gameState.status) {
             case GameStatus.NotStarted:
-                return <StartScreen onStart={handleStartGame} onShowLeaderboard={handleShowLeaderboard} />;
+                return <StartScreen 
+                            onStart={handleStartGame} 
+                            onShowLeaderboard={handleShowLeaderboard}
+                            settings={settings}
+                            onUpdateSettings={updateSettings}
+                        />;
             case GameStatus.Leaderboard:
                 return <LeaderboardScreen scores={leaderboard} onBack={handleBackToMenu} loading={leaderboardLoading} />;
             case GameStatus.GameOver:
                 return <GameOverScreen 
                             score={gameState.kills} 
                             marketCap={gameState.marketCap} 
+                            maxBalance={gameState.maxBalanceAchieved}
                             onRestart={() => handleStartGame(gameState.currentUser)}
                             onBackToHome={handleBackToMenu}
                             isNewHighScore={gameState.isNewHighScore}

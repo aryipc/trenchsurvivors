@@ -1,14 +1,12 @@
 
-
 import React from 'react';
 import { Player } from '../types';
+import { SHIBA_HELMET_ICON } from '../constants';
 
 interface PlayerProps {
     player: Player;
     auraRadius: number;
 }
-
-const PLAYER_SVG_BASE64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0NSIgZmlsbD0iI0Y5RTA0QyIvPjxyZWN0IHg9IjIwIiB5PSI0MCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjI1IiByeD0iMTAiIGZpbGw9IiMyMjIiLz48cmVjdCB4PSIyNSIgeT0iNDUiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxNSIgZmlsbD0iIzU1NSIvPjxyZWN0IHg9IjUzIiB5PSI0NSIgd2lkdGg9IjIyIiBoZWlnaHQ9IjE1IiBmaWxsPSIjNTU1Ii8+PHBhdGggZD0iTTMwIDc1IFEgNTAgODUgNzAgNzUiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSI0IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=";
 
 const PlayerComponent: React.FC<PlayerProps> = ({ player, auraRadius }) => {
     const style: React.CSSProperties = {
@@ -25,6 +23,19 @@ const PlayerComponent: React.FC<PlayerProps> = ({ player, auraRadius }) => {
       top: player.y - auraRadius,
     };
 
+    const useDefaultIcon = !player.avatarUrl;
+
+    // Use a background image for the default icon to get better control over size and position.
+    // This avoids transform/scaling issues and ensures perfect centering.
+    const iconContainerStyle: React.CSSProperties = useDefaultIcon
+        ? {
+              backgroundImage: `url(${SHIBA_HELMET_ICON})`,
+              backgroundSize: '140%', // Make the icon appear larger inside the circle
+              backgroundPosition: 'center', // Vertically and horizontally center the logo
+              backgroundRepeat: 'no-repeat',
+          }
+        : {};
+
     return (
         <>
             {auraRadius > 0 && (
@@ -34,11 +45,20 @@ const PlayerComponent: React.FC<PlayerProps> = ({ player, auraRadius }) => {
                 ></div>
             )}
             <div className="absolute z-10" style={style}>
-                <img 
-                    src={player.avatarUrl || PLAYER_SVG_BASE64} 
-                    alt="Player" 
-                    className="w-full h-full rounded-full bg-gray-700 border-2 border-yellow-300 object-cover" 
-                />
+                {/* This outer div creates the circular frame and clips the inner content. */}
+                <div
+                    className="w-full h-full rounded-full bg-gray-700 border-2 border-yellow-300 overflow-hidden"
+                    style={iconContainerStyle}
+                >
+                    {/* Only render the img tag for user avatars, not for the default icon */}
+                    {!useDefaultIcon && (
+                         <img 
+                            src={player.avatarUrl} 
+                            alt="Player" 
+                            className="w-full h-full object-cover"
+                        />
+                    )}
+                </div>
             </div>
         </>
     );

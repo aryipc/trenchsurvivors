@@ -164,6 +164,20 @@ export interface CurrentUser {
     avatarUrl: string;
 }
 
+export interface CameraState {
+    x: number; 
+    y: number;
+    shake?: {
+        duration: number;
+        intensity: number;
+    };
+}
+
+export interface Settings {
+    screenShake: boolean;
+    floatingText: boolean;
+}
+
 export interface GameState {
     status: GameStatus;
     player: Player;
@@ -180,7 +194,7 @@ export interface GameState {
     marketCap: number;
     maxBalanceAchieved: number;
     kills: number;
-    camera: { x: number; y: number; };
+    camera: CameraState;
     orbitAngle: number;
     bossState: {
         shockwaveTimer: number;

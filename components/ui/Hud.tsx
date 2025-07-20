@@ -1,8 +1,8 @@
 
 
 import React from 'react';
-import { Player, ItemType, GameStatus } from '../../types';
-import { ITEM_DATA } from '../../constants';
+import { Player, ItemType, GameStatus, WeaponType } from '../../types';
+import { ITEM_DATA, CROCODILE_ICON } from '../../constants';
 
 interface HudProps {
     player: Player;
@@ -14,8 +14,16 @@ interface HudProps {
     lastSkillUsed: { id: string, name: string; life: number } | null;
 }
 
+const WEAPON_ICONS: Record<WeaponType, string> = {
+    [WeaponType.ShillTweet]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cG9seWdvbiBwb2ludHM9IjEwLDEwIDkwLDUwIDEwLDkwIDI1LDUwIiBmaWxsPSIjMzhiZGY4Ii8+PC9zdmc+",
+    [WeaponType.HODLerArea]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSIxNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjQiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSIzMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utb3BhY2l0eT0iMC42IiBzdHJva2Utd2lkdGg9IjQiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0NSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utb3BhY2l0eT0iMC4zIiBzdHJva2Utd2lkdGg9IjQiLz48L3N2Zz4=",
+    [WeaponType.TradingBot]: CROCODILE_ICON,
+    [WeaponType.LaserEyes]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNIDEwIDUwIEMgMTAgMjAsIDkwIDIwLCA5MCA1MCBDIDkwIDgwLCAxMCA4MCwgMTAgNTBaIiBmaWxsPSIjZmZmIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMyIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjI1IiBmaWxsPSIjZjAwIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMTAiIGZpbGw9IiMwMDAiLz48Y2lyY2xlIGN4PSI0NSIgY3k9IjQwIiByPSI4IiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIwLjciLz48L3N2Zz4=",
+    [WeaponType.Airdrop]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNNjAsODBIODVWMzBINjBWNDVINDVWODBIOSIgc3Ryb2tlPSIjODc2MjQxIiBmaWxsPSIjQjU4NDU5IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNMjUsMzAgaDIwIHYtMjAgYTEwIDEwIDAgMSAxIDIwIDAgdjIwIGgyMCIgc3Ryb2tlPSIjRUZFRkZGIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==",
+};
+
 export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, onUseItem, lastSkillUsed }) => {
-    const { health, maxHealth, xp, xpToNextLevel, level, heldItem } = player;
+    const { health, maxHealth, xp, xpToNextLevel, level, heldItem, weapons } = player;
     const healthPercentage = (health / maxHealth) * 100;
     const xpPercentage = (xp / xpToNextLevel) * 100;
     
@@ -53,6 +61,19 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
                             style={{ width: `${xpPercentage}%` }}
                         ></div>
                          <div className="absolute w-full text-center top-1/2 -translate-y-1/2 text-xs font-bold text-shadow">{Math.floor(xp)} / {xpToNextLevel} Hype</div>
+                    </div>
+
+                    {/* Acquired Weapons Display */}
+                    <div className="mt-2 flex justify-center items-center gap-2 flex-wrap px-2">
+                        {weapons
+                            .slice()
+                            .sort((a, b) => a.type.localeCompare(b.type))
+                            .map(weapon => (
+                                <div key={weapon.type} className="flex items-center gap-1.5 bg-gray-900/50 p-1 rounded-md border border-gray-600 backdrop-blur-sm">
+                                    <img src={WEAPON_ICONS[weapon.type]} alt={weapon.type} className="w-6 h-6" style={{ imageRendering: 'pixelated' }} />
+                                    <span className="text-sm font-bold text-yellow-300 pr-1">L{weapon.level}</span>
+                                </div>
+                        ))}
                     </div>
                     
                     {/* Activated Skill Name */}
