@@ -17,8 +17,8 @@ export const MC_VOLATILITY_AMOUNT = 250; // Max random amount to drop by
 export const BOSS_RANGED_ATTACK_COOLDOWN = 3.0; // seconds
 export const BOSS_RANGED_ATTACK_DAMAGE = 15;
 export const BOSS_RANGED_ATTACK_SPEED = 350;
-export const BOSS_PROJECTILE_WIDTH = 25;
-export const BOSS_PROJECTILE_HEIGHT = 25;
+export const BOSS_PROJECTILE_WIDTH = 80; // Length of the candle
+export const BOSS_PROJECTILE_HEIGHT = 20; // Width of the candle
 
 
 export const WEAPON_DATA: Record<WeaponType, WeaponData> = {

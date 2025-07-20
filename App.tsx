@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import GameScreen from './components/GameScreen';
 import { Hud } from './components/ui/Hud';
@@ -595,12 +597,42 @@ const App: React.FC = () => {
                         }
                     });
                 } else if (p.owner === 'enemy') {
-                    const dx = player.x - p.x; const dy = player.y - p.y; const dist = Math.sqrt(player.width / 2 + p.width / 2);
-                    if (dist < player.width / 2 + p.width / 2) {
-                        player.health -= p.damage;
-                        addFloatingText(p.damage.toString(), player.x, player.y - 20, '#ef4444');
-                        if (settings.screenShake) camera.shake = { duration: 0.2, intensity: 4 };
-                        hit = true;
+                    if (p.isBossProjectile) {
+                        // Capsule collision for the boss's "candle" projectile
+                        const len = p.width; // Length of the candle
+                        const thick = p.height; // Thickness of the candle
+                        const x1 = p.x - (p.dx || 0) * len / 2;
+                        const y1 = p.y - (p.dy || 0) * len / 2;
+                        const x2 = p.x + (p.dx || 0) * len / 2;
+                        const y2 = p.y + (p.dy || 0) * len / 2;
+                        const seg_dx = x2 - x1;
+                        const seg_dy = y2 - y1;
+                        const l2 = seg_dx * seg_dx + seg_dy * seg_dy;
+                        let t = 0;
+                        if (l2 > 0) {
+                            t = Math.max(0, Math.min(1, ((player.x - x1) * seg_dx + (player.y - y1) * seg_dy) / l2));
+                        }
+                        const closestX = x1 + t * seg_dx;
+                        const closestY = y1 + t * seg_dy;
+                        const distToBeam = Math.sqrt(Math.pow(player.x - closestX, 2) + Math.pow(player.y - closestY, 2));
+
+                        if (distToBeam < (player.width / 2) + (thick / 2)) {
+                            player.health -= p.damage;
+                            addFloatingText(p.damage.toString(), player.x, player.y - 20, '#ef4444');
+                            if (settings.screenShake) camera.shake = { duration: 0.2, intensity: 4 };
+                            hit = true;
+                        }
+                    } else {
+                        // Standard circular collision for other enemy projectiles
+                        const dx = player.x - p.x;
+                        const dy = player.y - p.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < player.width / 2 + p.width / 2) {
+                            player.health -= p.damage;
+                            addFloatingText(p.damage.toString(), player.x, player.y - 20, '#ef4444');
+                            if (settings.screenShake) camera.shake = { duration: 0.2, intensity: 4 };
+                            hit = true;
+                        }
                     }
                 }
             
