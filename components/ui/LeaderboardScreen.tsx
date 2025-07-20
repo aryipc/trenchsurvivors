@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ScoreEntry } from '../../types';
 
@@ -36,7 +37,7 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ scores, onBack, l
     };
 
     return (
-        <div className="absolute inset-0 bg-gray-900 flex flex-col justify-center items-center z-30 text-white p-4">
+        <div className="absolute inset-0 bg-gray-900 flex flex-col items-center z-30 text-white p-4 pt-16 overflow-y-auto" style={{ touchAction: 'pan-y' }}>
             <div className="w-full max-w-3xl">
                 <h1 className="text-6xl font-cinzel text-yellow-300 mb-8 text-center drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">High Scores</h1>
                 

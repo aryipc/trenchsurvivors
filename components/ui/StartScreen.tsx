@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import InfoModal from './InfoModal';
 import XProfileModal from './XLoginModal';
@@ -79,7 +80,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onShowLeaderboard })
 
     return (
         <>
-            <div className="absolute inset-0 bg-gray-900 flex flex-col justify-center items-center z-30 text-white p-4">
+            <div className="absolute inset-0 bg-gray-900 flex flex-col items-center z-30 text-white p-4 pt-16 overflow-y-auto" style={{ touchAction: 'pan-y' }}>
                 <div className="text-center mb-10">
                     <h1 className="text-6xl md:text-8xl font-cinzel text-green-400 mb-4 drop-shadow-[0_4px_4px_rgba(0,0,0,0.7)]">
                         TRENCH<br />SURVIVORS
