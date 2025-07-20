@@ -1,7 +1,3 @@
-
-
-
-
 import React from 'react';
 import { GameState, Enemy, Projectile, ExperienceGem, WeaponType, FloatingText, Airdrop, VisualEffect, Player, LaserBeam, ItemDrop, ItemType, ActiveCandle, ActiveItem } from '../types';
 import PlayerComponent from './Player';
@@ -12,6 +8,7 @@ import { GAME_AREA_WIDTH, GAME_AREA_HEIGHT, WEAPON_DATA, ITEM_DATA, CROCODILE_IC
 
 interface GameScreenProps {
     gameState: GameState;
+    isTouch: boolean;
 }
 
 const FloatingTextComponent: React.FC<{text: FloatingText}> = ({ text }) => {
@@ -206,13 +203,16 @@ const ActiveCandleComponent: React.FC<{ item: ActiveCandle, player: Player }> = 
     return <div style={style} />;
 });
 
-const GameScreen: React.FC<GameScreenProps> = ({ gameState }) => {
+const GameScreen: React.FC<GameScreenProps> = ({ gameState, isTouch }) => {
     const { player, enemies, projectiles, gems, floatingTexts, airdrops, visualEffects, itemDrops, activeItems, camera, orbitAngle, activeLaser } = gameState;
+
+    const zoom = isTouch ? 0.75 : 1.0;
 
     const gameAreaStyle: React.CSSProperties = {
         width: `${GAME_AREA_WIDTH}px`,
         height: `${GAME_AREA_HEIGHT}px`,
-        transform: `translate(${-camera.x}px, ${-camera.y}px)`,
+        transform: `scale(${zoom}) translate(${-camera.x}px, ${-camera.y}px)`,
+        transformOrigin: 'top left',
         backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23374151\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
     };
 
@@ -222,7 +222,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState }) => {
     const tradingBotWeapon = player.weapons.find(w => w.type === WeaponType.TradingBot);
 
     return (
-        <div className="absolute top-0 left-0 w-full h-full">
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
             <div className="absolute transition-transform duration-100 ease-linear" style={gameAreaStyle}>
                 {activeLaser && <LaserBeamComponent player={player} beam={activeLaser} enemies={enemies} />}
                 <PlayerComponent player={player} auraRadius={auraRadius} />

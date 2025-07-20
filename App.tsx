@@ -178,6 +178,8 @@ const App: React.FC = () => {
             
             gameTime += delta;
             
+            const zoom = isTouch ? 0.75 : 1.0;
+
             const botData = WEAPON_DATA[WeaponType.TradingBot];
             orbitAngle = (orbitAngle + (botData.speed * delta)) % (2 * Math.PI);
 
@@ -229,8 +231,8 @@ const App: React.FC = () => {
             player.y = Math.max(player.height / 2, Math.min(GAME_AREA_HEIGHT - player.height / 2, player.y));
             
             // --- CAMERA SMOOTHING ---
-            const cameraTargetX = player.x - window.innerWidth / 2;
-            const cameraTargetY = player.y - window.innerHeight / 2;
+            const cameraTargetX = player.x - (window.innerWidth / zoom) / 2;
+            const cameraTargetY = player.y - (window.innerHeight / zoom) / 2;
             const smoothFactor = 5; // Higher value means faster, more rigid camera. Lower is smoother.
             const cameraLerpFactor = 1 - Math.exp(-smoothFactor * delta);
             camera.x = camera.x * (1 - cameraLerpFactor) + cameraTargetX * cameraLerpFactor;
@@ -664,7 +666,7 @@ const App: React.FC = () => {
                 camera,
             };
         });
-    }, [handleLevelUp]);
+    }, [handleLevelUp, isTouch]);
 
     useGameLoop(gameTick, gameState.status === GameStatus.Playing || gameState.status === GameStatus.BossFight);
 
@@ -722,7 +724,7 @@ const App: React.FC = () => {
                             isTouch={isTouch}
                             onUseItem={handleUseItem}
                         />
-                        <GameScreen gameState={gameState} />
+                        <GameScreen gameState={gameState} isTouch={isTouch} />
                        
                         {gameState.status === GameStatus.LevelUp && (
                             <LevelUpModal

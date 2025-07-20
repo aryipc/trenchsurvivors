@@ -4,12 +4,15 @@ import { ScoreEntry, CurrentUser } from '../types';
 let redis: Redis | null = null;
 try {
     // This assumes UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are available in the environment.
-    // In a real app, this should be handled by a secure backend, not on the client.
-    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    const url = process.env.UPSTASH_REDIS_REST_URL;
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+    if (url && token) {
         redis = new Redis({
-            url: process.env.UPSTASH_REDIS_REST_URL,
-            token: process.env.UPSTASH_REDIS_REST_TOKEN,
+            url: url.trim(),
+            token: token.trim(),
         });
+        console.log("Successfully initialized Upstash Redis client for leaderboard.");
     } else {
         console.warn('Upstash Redis environment variables not set. Leaderboard will be disabled.');
     }
@@ -28,7 +31,7 @@ export const getLeaderboard = async (): Promise<ScoreEntry[]> => {
     if (!redis) return [];
     try {
         // Fetch top 100 usernames and their scores
-        const leaderboardData = await redis.zrevrange(LEADERBOARD_KEY, 0, 99, { withScores: true });
+        const leaderboardData = await redis.zrange(LEADERBOARD_KEY, 0, 99, { withScores: true, rev: true });
 
         const scores: ScoreEntry[] = [];
         if (leaderboardData.length === 0) return [];
@@ -39,12 +42,19 @@ export const getLeaderboard = async (): Promise<ScoreEntry[]> => {
             const username = leaderboardData[i] as string;
             pipeline.hgetall(`${USER_KEY_PREFIX}${username}`);
         }
-        const usersData = (await pipeline.exec()) as (Record<string, string> | null)[];
+        const usersDataResults = (await pipeline.exec()) as (Record<string, string> | null | Error)[];
 
-        for (let i = 0; i < usersData.length; i++) {
+        for (let i = 0; i < usersDataResults.length; i++) {
             const username = leaderboardData[i * 2] as string;
             const score = leaderboardData[i * 2 + 1] as number;
-            const userData = usersData[i];
+            const userDataResult = usersDataResults[i];
+
+            if (userDataResult instanceof Error) {
+                console.error(`Failed to fetch data for user ${username}`, userDataResult);
+                continue; // Skip entries that failed to load
+            }
+            
+            const userData = userDataResult;
 
             scores.push({
                 username,
