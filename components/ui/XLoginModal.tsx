@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 
-interface XLoginModalProps {
+interface XProfileModalProps {
     onClose: () => void;
     onConfirm: (username: string) => void;
+    isSubmitting: boolean;
 }
 
 const XLogo = () => (
@@ -14,13 +14,16 @@ const XLogo = () => (
     </svg>
 );
 
+const LoadingSpinner: React.FC = () => (
+    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto"></div>
+);
 
-const XLoginModal: React.FC<XLoginModalProps> = ({ onClose, onConfirm }) => {
+const XProfileModal: React.FC<XProfileModalProps> = ({ onClose, onConfirm, isSubmitting }) => {
     const [username, setUsername] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (username.trim()) {
+        if (username.trim() && !isSubmitting) {
             onConfirm(username.trim());
         }
     };
@@ -49,20 +52,22 @@ const XLoginModal: React.FC<XLoginModalProps> = ({ onClose, onConfirm }) => {
                             maxLength={15}
                             className="bg-gray-800 border-2 border-gray-600 rounded-md pl-8 pr-4 py-3 text-white w-full text-lg focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition"
                             autoFocus
+                            disabled={isSubmitting}
                         />
                     </div>
                     
                     <button
                         type="submit"
-                        disabled={!username.trim()}
-                        className="w-full mt-6 bg-blue-500 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-400 transition-colors transform disabled:bg-gray-600 disabled:cursor-not-allowed"
+                        disabled={!username.trim() || isSubmitting}
+                        className="w-full mt-6 bg-blue-500 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-400 transition-colors transform disabled:bg-gray-600 disabled:cursor-not-allowed h-[52px] flex items-center justify-center"
                     >
-                        Continue
+                        {isSubmitting ? <LoadingSpinner /> : 'Continue'}
                     </button>
                      <button
                         type="button"
                         onClick={onClose}
-                        className="w-full mt-2 text-gray-400 hover:text-white transition-colors py-2 rounded-lg"
+                        className="w-full mt-2 text-gray-400 hover:text-white transition-colors py-2 rounded-lg disabled:opacity-50"
+                        disabled={isSubmitting}
                     >
                         Cancel
                     </button>
@@ -72,4 +77,4 @@ const XLoginModal: React.FC<XLoginModalProps> = ({ onClose, onConfirm }) => {
     );
 };
 
-export default XLoginModal;
+export default XProfileModal;

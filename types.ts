@@ -62,6 +62,7 @@ export interface Player extends GameObject {
     lastMoveDx: number;
     lastMoveDy: number;
     heldItem: HeldItem | null;
+    avatarUrl?: string;
 }
 
 export interface Enemy extends GameObject {

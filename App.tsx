@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import GameScreen from './components/GameScreen';
 import { Hud } from './components/ui/Hud';
@@ -63,6 +62,7 @@ const App: React.FC = () => {
     const [descriptions, setDescriptions] = useState<Record<string, string>>({});
     const [loadingDescriptions, setLoadingDescriptions] = useState(false);
     const [leaderboard, setLeaderboard] = useState<ScoreEntry[]>([]);
+    const [leaderboardLoading, setLeaderboardLoading] = useState(false);
     const { isTouch, handleJoystickMove, handleUseItem } = useTouchControls();
 
     const handleStartGame = (user: CurrentUser | null) => {
@@ -82,6 +82,7 @@ const App: React.FC = () => {
             lastMoveDx: 0,
             lastMoveDy: -1,
             heldItem: { type: ItemType.Candle, variant: 'Gake' },
+            avatarUrl: user?.avatarUrl,
         };
         setGameState({
             status: GameStatus.Playing,
@@ -107,9 +108,12 @@ const App: React.FC = () => {
         });
     };
 
-    const handleShowLeaderboard = () => {
-        setLeaderboard(getLeaderboard());
+    const handleShowLeaderboard = async () => {
+        setLeaderboardLoading(true);
         setGameState(prev => ({ ...prev, status: GameStatus.Leaderboard }));
+        const scores = await getLeaderboard();
+        setLeaderboard(scores);
+        setLeaderboardLoading(false);
     };
 
     const handleBackToMenu = () => {
@@ -169,9 +173,9 @@ const App: React.FC = () => {
         setGameState(prev => {
             if (prev.status !== GameStatus.Playing && prev.status !== GameStatus.BossFight) return prev;
 
-            let { player, enemies, projectiles, gems, floatingTexts, airdrops, visualEffects, itemDrops, activeItems, gameTime, marketCap, kills, orbitAngle, activeLaser, bossState, bossHasBeenDefeated } = JSON.parse(JSON.stringify(prev));
+            let { player, enemies, projectiles, gems, floatingTexts, airdrops, visualEffects, itemDrops, activeItems, gameTime, marketCap, kills, orbitAngle, activeLaser, bossState, bossHasBeenDefeated, camera } = JSON.parse(JSON.stringify(prev));
             let currentStatus: GameStatus = prev.status;
-            let isNewHighScore = false;
+            
             gameTime += delta;
             
             const botData = WEAPON_DATA[WeaponType.TradingBot];
@@ -224,6 +228,14 @@ const App: React.FC = () => {
             player.x = Math.max(player.width / 2, Math.min(GAME_AREA_WIDTH - player.width / 2, player.x));
             player.y = Math.max(player.height / 2, Math.min(GAME_AREA_HEIGHT - player.height / 2, player.y));
             
+            // --- CAMERA SMOOTHING ---
+            const cameraTargetX = player.x - window.innerWidth / 2;
+            const cameraTargetY = player.y - window.innerHeight / 2;
+            const smoothFactor = 5; // Higher value means faster, more rigid camera. Lower is smoother.
+            const cameraLerpFactor = 1 - Math.exp(-smoothFactor * delta);
+            camera.x = camera.x * (1 - cameraLerpFactor) + cameraTargetX * cameraLerpFactor;
+            camera.y = camera.y * (1 - cameraLerpFactor) + cameraTargetY * cameraLerpFactor;
+
             // --- ITEM ACTIVATION ---
             if ((keys[' '] || touchState.useItem) && player.heldItem) {
                 if (touchState.useItem) {
@@ -619,9 +631,6 @@ const App: React.FC = () => {
 
             // --- GAME STATE CHECKS ---
             if (player.health <= 0 || (prev.status === GameStatus.BossFight && marketCap <= STARTING_MC)) {
-                if (prev.currentUser) {
-                    isNewHighScore = addScore(prev.currentUser, marketCap);
-                }
                 currentStatus = GameStatus.GameOver;
             }
 
@@ -652,13 +661,29 @@ const App: React.FC = () => {
                 activeLaser, 
                 bossState,
                 bossHasBeenDefeated,
-                isNewHighScore,
-                camera: { x: player.x - window.innerWidth / 2, y: player.y - window.innerHeight / 2 }
+                camera,
             };
         });
     }, [handleLevelUp]);
 
     useGameLoop(gameTick, gameState.status === GameStatus.Playing || gameState.status === GameStatus.BossFight);
+
+    useEffect(() => {
+        // Post score to leaderboard when game is over
+        if (gameState.status === GameStatus.GameOver && gameState.currentUser && !gameState.isNewHighScore) {
+            const postScore = async () => {
+                const newHighScore = await addScore(gameState.currentUser!, gameState.marketCap);
+                // Only update state if the component is still mounted and the game is over
+                setGameState(prev => {
+                    if (prev.status === GameStatus.GameOver) {
+                        return { ...prev, isNewHighScore: newHighScore };
+                    }
+                    return prev;
+                });
+            };
+            postScore();
+        }
+    }, [gameState.status, gameState.marketCap, gameState.currentUser, gameState.isNewHighScore]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => { (window as any).pressedKeys = (window as any).pressedKeys || {}; if ((window as any).pressedKeys[e.key] !== true) (window as any).pressedKeys[e.key] = true; };
@@ -673,7 +698,7 @@ const App: React.FC = () => {
             case GameStatus.NotStarted:
                 return <StartScreen onStart={handleStartGame} onShowLeaderboard={handleShowLeaderboard} />;
             case GameStatus.Leaderboard:
-                return <LeaderboardScreen scores={leaderboard} onBack={handleBackToMenu} />;
+                return <LeaderboardScreen scores={leaderboard} onBack={handleBackToMenu} loading={leaderboardLoading} />;
             case GameStatus.GameOver:
                 return <GameOverScreen 
                             score={gameState.kills} 

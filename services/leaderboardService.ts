@@ -1,69 +1,100 @@
-
-
+import { Redis } from '@upstash/redis';
 import { ScoreEntry, CurrentUser } from '../types';
 
-const LEADERBOARD_KEY = 'trenchSurvivorsLeaderboard';
+let redis: Redis | null = null;
+try {
+    // This assumes UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are available in the environment.
+    // In a real app, this should be handled by a secure backend, not on the client.
+    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+        redis = new Redis({
+            url: process.env.UPSTASH_REDIS_REST_URL,
+            token: process.env.UPSTASH_REDIS_REST_TOKEN,
+        });
+    } else {
+        console.warn('Upstash Redis environment variables not set. Leaderboard will be disabled.');
+    }
+} catch (e) {
+    console.error("Could not initialize Upstash Redis client:", e);
+}
+
+const LEADERBOARD_KEY = 'trench_survivors_leaderboard_v2'; // Use a new key to avoid conflicts with old structure
+const USER_KEY_PREFIX = 'trench_survivors_user_v2:';
 
 /**
- * Retrieves the leaderboard from localStorage and sorts it by score.
- * @returns A sorted array of ScoreEntry objects.
+ * Retrieves the leaderboard from Upstash Redis.
+ * @returns A promise that resolves to a sorted array of ScoreEntry objects.
  */
-export const getLeaderboard = (): ScoreEntry[] => {
+export const getLeaderboard = async (): Promise<ScoreEntry[]> => {
+    if (!redis) return [];
     try {
-        const data = localStorage.getItem(LEADERBOARD_KEY);
-        if (!data) return [];
-        const scores: ScoreEntry[] = JSON.parse(data);
-        // Ensure scores are always sorted when retrieved
-        return scores.sort((a, b) => b.score - a.score);
+        // Fetch top 100 usernames and their scores
+        const leaderboardData = await redis.zrevrange(LEADERBOARD_KEY, 0, 99, { withScores: true });
+
+        const scores: ScoreEntry[] = [];
+        if (leaderboardData.length === 0) return [];
+        
+        // Batch user data fetching
+        const pipeline = redis.pipeline();
+        for (let i = 0; i < leaderboardData.length; i += 2) {
+            const username = leaderboardData[i] as string;
+            pipeline.hgetall(`${USER_KEY_PREFIX}${username}`);
+        }
+        const usersData = (await pipeline.exec()) as (Record<string, string> | null)[];
+
+        for (let i = 0; i < usersData.length; i++) {
+            const username = leaderboardData[i * 2] as string;
+            const score = leaderboardData[i * 2 + 1] as number;
+            const userData = usersData[i];
+
+            scores.push({
+                username,
+                score,
+                avatarUrl: userData?.avatarUrl,
+                date: userData?.date || new Date().toISOString(),
+            });
+        }
+        
+        return scores;
     } catch (error) {
-        console.error("Failed to retrieve leaderboard from localStorage", error);
-        // In case of error, clear corrupted data
-        localStorage.removeItem(LEADERBOARD_KEY);
+        console.error("Failed to retrieve leaderboard from Upstash Redis", error);
         return [];
     }
 };
 
 /**
- * Adds or updates a score for a user in the localStorage leaderboard.
- * A score is only added if it's higher than the user's previous high score.
+ * Adds or updates a score for a user in the Upstash Redis leaderboard.
  * @param user The current user object containing username and avatarUrl.
  * @param score The market cap score from the game.
- * @returns A boolean indicating if a new high score was saved.
+ * @returns A promise that resolves to a boolean indicating if a new high score was saved.
  */
-export const addScore = (user: CurrentUser, score: number): boolean => {
+export const addScore = async (user: CurrentUser, score: number): Promise<boolean> => {
+    if (!redis) return false;
     if (!user || !user.username.trim()) return false;
 
     try {
-        const leaderboard = getLeaderboard();
-        const existingEntryIndex = leaderboard.findIndex(entry => entry.username.toLowerCase() === user.username.toLowerCase());
-
-        const now = new Date().toISOString();
+        const username = user.username;
+        const existingScore = await redis.zscore(LEADERBOARD_KEY, username);
         let isNewHighScore = false;
 
-        if (existingEntryIndex !== -1) {
-            // User exists, check if new score is higher
-            if (score > leaderboard[existingEntryIndex].score) {
-                leaderboard[existingEntryIndex].score = score;
-                leaderboard[existingEntryIndex].date = now;
-                leaderboard[existingEntryIndex].avatarUrl = user.avatarUrl; // Update avatar too
-                isNewHighScore = true;
-            }
-        } else {
-            // New user, add to leaderboard
-            leaderboard.push({ username: user.username, avatarUrl: user.avatarUrl, score, date: now });
+        if (existingScore === null || score > existingScore) {
+            const pipeline = redis.pipeline();
+            
+            // Add/update score in the sorted set
+            pipeline.zadd(LEADERBOARD_KEY, { score, member: username });
+
+            // Store/update user metadata in a hash
+            pipeline.hset(`${USER_KEY_PREFIX}${username}`, {
+                avatarUrl: user.avatarUrl,
+                date: new Date().toISOString(),
+            });
+
+            await pipeline.exec();
             isNewHighScore = true;
         }
 
-        if (isNewHighScore) {
-            // Sort before saving to keep the list tidy
-            leaderboard.sort((a, b) => b.score - a.score);
-            localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
-        }
-
         return isNewHighScore;
-
     } catch (error) {
-        console.error("Failed to save score to localStorage", error);
+        console.error("Failed to save score to Upstash Redis", error);
         return false;
     }
 };

@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Player } from '../types';
 
@@ -33,7 +34,11 @@ const PlayerComponent: React.FC<PlayerProps> = ({ player, auraRadius }) => {
                 ></div>
             )}
             <div className="absolute z-10" style={style}>
-                <img src={PLAYER_SVG_BASE64} alt="Player" className="w-full h-full" />
+                <img 
+                    src={player.avatarUrl || PLAYER_SVG_BASE64} 
+                    alt="Player" 
+                    className="w-full h-full rounded-full bg-gray-700 border-2 border-yellow-300 object-cover" 
+                />
             </div>
         </>
     );
