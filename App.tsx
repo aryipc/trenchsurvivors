@@ -69,9 +69,11 @@ const App: React.FC = () => {
     const [loadingDescriptions, setLoadingDescriptions] = useState(false);
     const [leaderboard, setLeaderboard] = useState<ScoreEntry[]>([]);
     const [leaderboardLoading, setLeaderboardLoading] = useState(false);
-    const { isTouch } = useTouchControls();
     const [settings, updateSettings] = useSettings();
     const [pausedFromStatus, setPausedFromStatus] = useState<GameStatus | null>(null);
+
+    const gameIsRunning = gameState.status === GameStatus.Playing || gameState.status === GameStatus.BossFight;
+    const { isTouch } = useTouchControls(gameIsRunning);
 
     // Effect for handling game pause/resume on tab visibility/focus change
     useEffect(() => {
@@ -876,7 +878,7 @@ const App: React.FC = () => {
             style={{ touchAction: 'none' }}
         >
             {renderGameContent()}
-            {isTouch && (gameState.status === GameStatus.Playing || gameState.status === GameStatus.BossFight) && (
+            {isTouch && gameIsRunning && (
                 <>
                     <VirtualJoystick />
                     <SkillButton player={gameState.player} />

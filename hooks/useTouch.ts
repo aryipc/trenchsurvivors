@@ -11,22 +11,22 @@ const touchState = {
 (window as any).touchState = touchState;
 
 
-export const useTouchControls = () => {
-    const [isTouch, setIsTouch] = useState(false);
+export const useTouchControls = (enabled: boolean) => {
+    const [isTouch] = useState(() => ('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
     const joystickPointerId = useRef<number | null>(null);
     const joystickBasePos = useRef({ x: 0, y: 0 });
     const maxDiff = 60; // Half of joystick base size (120px)
 
     useEffect(() => {
-        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        setIsTouch(isTouchDevice);
-        
-        if (!isTouchDevice) return;
-
-        // Reset state on load
-        touchState.joystick = { x: 0, y: 0 };
-        touchState.useItem = false;
-        joystickPointerId.current = null;
+        if (!isTouch || !enabled) {
+            // Ensure state is reset if controls are disabled.
+            if (joystickPointerId.current !== null) {
+                joystickPointerId.current = null;
+                touchState.joystick = { x: 0, y: 0 };
+            }
+            touchState.useItem = false;
+            return; // Don't attach listeners
+        }
 
         // --- Define touch areas ---
         // These are hardcoded based on CSS.
@@ -73,14 +73,14 @@ export const useTouchControls = () => {
         };
 
         const handleTouchStart = (e: TouchEvent) => {
-            e.preventDefault();
             const rects = getRects();
+            let gameControlTouched = false;
             for (const touch of Array.from(e.changedTouches)) {
                 // Check for skill button first
                 if (isInsideRect(touch, rects.skillButton)) {
                     touchState.useItem = true;
-                    // We don't track this touch's ID because it's a one-shot action
-                    continue; // Check if other new touches are for the joystick
+                    gameControlTouched = true;
+                    continue; 
                 }
                 // Check for joystick if no pointer is already active
                 if (joystickPointerId.current === null && isInsideRect(touch, rects.joystick)) {
@@ -90,28 +90,37 @@ export const useTouchControls = () => {
                         y: rects.joystick.y + rects.joystick.height / 2,
                     };
                     updateJoystick(touch.clientX, touch.clientY);
+                    gameControlTouched = true;
                 }
+            }
+
+            // Only prevent default browser behavior (like scrolling or click events)
+            // if we are actually using one of the game's touch controls.
+            if (gameControlTouched) {
+                e.preventDefault();
             }
         };
 
         const handleTouchMove = (e: TouchEvent) => {
-            e.preventDefault();
-            for (const touch of Array.from(e.changedTouches)) {
-                if (touch.identifier === joystickPointerId.current) {
-                    updateJoystick(touch.clientX, touch.clientY);
-                }
+            const joystickTouch = Array.from(e.changedTouches).find(
+                t => t.identifier === joystickPointerId.current
+            );
+            
+            if (joystickTouch) {
+                e.preventDefault();
+                updateJoystick(joystickTouch.clientX, joystickTouch.clientY);
             }
         };
 
         const handleTouchEnd = (e: TouchEvent) => {
-            e.preventDefault();
-            for (const touch of Array.from(e.changedTouches)) {
-                 if (touch.identifier === joystickPointerId.current) {
-                    joystickPointerId.current = null;
-                    touchState.joystick = { x: 0, y: 0 };
-                }
-                // No need to handle touchend for the skill button, as its state
-                // is reset in the game loop after one frame.
+            const joystickTouchEnded = Array.from(e.changedTouches).some(
+                t => t.identifier === joystickPointerId.current
+            );
+
+            if (joystickTouchEnded) {
+                e.preventDefault();
+                joystickPointerId.current = null;
+                touchState.joystick = { x: 0, y: 0 };
             }
         };
 
@@ -126,9 +135,8 @@ export const useTouchControls = () => {
             window.removeEventListener('touchend', handleTouchEnd);
             window.removeEventListener('touchcancel', handleTouchEnd);
         };
-    }, [isTouch, maxDiff]);
+    }, [isTouch, enabled]);
 
     // This hook now only returns the `isTouch` flag.
-    // All state management is done via the global `touchState` object.
     return { isTouch };
 };
