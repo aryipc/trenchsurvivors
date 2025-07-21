@@ -1,5 +1,4 @@
 
-
 import React, { useRef, useEffect } from 'react';
 
 // This component is now purely for display.
@@ -36,7 +35,7 @@ const VirtualJoystick: React.FC = () => {
     return (
         <div 
             ref={baseRef}
-            className="absolute bottom-28 left-12 z-50 rounded-full bg-gray-500/30 flex justify-center items-center select-none pointer-events-none"
+            className="absolute bottom-[112px] left-[48px] z-50 rounded-full bg-gray-500/30 flex justify-center items-center select-none pointer-events-none"
             style={{ 
                 width: `${baseSize}px`, 
                 height: `${baseSize}px`,

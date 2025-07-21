@@ -24,7 +24,7 @@ const SkillButton: React.FC<SkillButtonProps> = ({ player }) => {
         // This is a non-interactive div. `pointer-events-none` ensures that it
         // doesn't interfere with the global touch listeners on the window.
         <div
-           className="absolute bottom-[124px] right-12 z-50 w-24 h-24 bg-gray-800/80 border-4 border-yellow-300 rounded-full shadow-lg flex items-center justify-center select-none pointer-events-none"
+           className="absolute bottom-[124px] right-[48px] z-50 w-24 h-24 bg-gray-800/80 border-4 border-yellow-300 rounded-full shadow-lg flex items-center justify-center select-none pointer-events-none"
            aria-hidden="true"
         >
            <img
