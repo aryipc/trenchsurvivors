@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Player, ItemType, GameStatus, WeaponType } from '../../types';
 import { ITEM_DATA, CROCODILE_ICON } from '../../constants';
 
@@ -29,6 +28,27 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
     const formatMarketCap = (value: number) => {
         return `$${Math.floor(value).toLocaleString()}`;
     };
+
+    const mobileSkillButtonRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        const button = mobileSkillButtonRef.current;
+        if (!button || !isTouch) return;
+
+        // Use a native event listener to bypass React's synthetic event system,
+        // which can be unreliable on mobile when other pointer events are active.
+        const handlePointerDown = (e: PointerEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onUseItem();
+        };
+
+        button.addEventListener('pointerdown', handlePointerDown);
+
+        return () => {
+            button.removeEventListener('pointerdown', handlePointerDown);
+        };
+    }, [isTouch, onUseItem]);
 
     return (
         <>
@@ -117,15 +137,10 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
             {/* Mobile Action Button */}
             {isTouch && heldItem?.type === ItemType.Candle && heldItem.variant && (
                  <button
+                    ref={mobileSkillButtonRef}
                     type="button"
                     className="absolute bottom-[124px] right-12 z-50 w-24 h-24 bg-gray-800/80 border-4 border-yellow-300 rounded-full shadow-lg flex items-center justify-center active:bg-yellow-400/50 p-0 appearance-none"
-                    onPointerDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onUseItem();
-                    }}
                     aria-label="Use Item"
-                    // Adding touch-action none is still good practice to prevent the browser from interfering.
                     style={{ touchAction: 'none' }}
                  >
                     <img
