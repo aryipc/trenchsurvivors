@@ -1,11 +1,11 @@
 
+
 import { useState, useEffect, useRef } from 'react';
 
 // A global object to hold the state, avoiding re-renders.
 // The game loop reads from this directly.
 const touchState = {
     joystick: { x: 0, y: 0 },
-    useItem: false
 };
 
 // Expose it to the game loop and other components.
@@ -43,7 +43,6 @@ export const useTouchControls = (enabled: boolean) => {
                 joystickPointerId.current = null;
                 touchState.joystick = { x: 0, y: 0 };
             }
-            touchState.useItem = false;
             return; // Don't attach listeners
         }
         
@@ -60,16 +59,10 @@ export const useTouchControls = (enabled: boolean) => {
         };
 
         const handleTouchStart = (e: TouchEvent) => {
-            const { joystick: joyRect, skillButton: skillRect } = (window as any).controlGeometries;
+            const { joystick: joyRect } = (window as any).controlGeometries;
             let gameControlTouched = false;
 
             for (const touch of Array.from(e.changedTouches)) {
-                // Check for skill button first
-                if (skillRect && isInsideCircle(touch, skillRect.left + skillRect.width / 2, skillRect.top + skillRect.height / 2, skillRect.width / 2)) {
-                    touchState.useItem = true;
-                    gameControlTouched = true;
-                    continue; 
-                }
                 // Check for joystick if no pointer is already active
                 if (joystickPointerId.current === null && joyRect && isInsideCircle(touch, joyRect.left + joyRect.width / 2, joyRect.top + joyRect.height / 2, joyRect.width / 2)) {
                     joystickPointerId.current = touch.identifier;

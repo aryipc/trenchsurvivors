@@ -33,11 +33,6 @@ export enum ItemType {
 
 export type CandleVariant = 'Gake' | 'West' | '奶牛candle';
 
-export interface HeldItem {
-    type: ItemType;
-    variant?: CandleVariant;
-}
-
 export interface GameObject {
     id: string;
     x: number;
@@ -63,7 +58,6 @@ export interface Player extends GameObject {
     weapons: Weapon[];
     lastMoveDx: number;
     lastMoveDy: number;
-    heldItem: HeldItem | null;
     avatarUrl?: string;
 }
 

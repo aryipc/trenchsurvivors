@@ -36,7 +36,6 @@ const App: React.FC = () => {
             weapons: [{ type: WeaponType.ShillTweet, level: 1, cooldown: WEAPON_DATA[WeaponType.ShillTweet].cooldown, timer: 0 }],
             lastMoveDx: 0,
             lastMoveDy: -1,
-            heldItem: { type: ItemType.Candle, variant: 'Gake' },
         };
         return {
             status: GameStatus.NotStarted,
@@ -138,7 +137,6 @@ const App: React.FC = () => {
             weapons: [{ type: WeaponType.ShillTweet, level: 1, cooldown: WEAPON_DATA[WeaponType.ShillTweet].cooldown, timer: 0 }],
             lastMoveDx: 0,
             lastMoveDy: -1,
-            heldItem: { type: ItemType.Candle, variant: 'Gake' },
             avatarUrl: user?.avatarUrl,
         };
         setGameState({
@@ -272,7 +270,7 @@ const App: React.FC = () => {
                 });
             };
             
-            const touchState = (window as any).touchState || { joystick: { x: 0, y: 0 }, useItem: false };
+            const touchState = (window as any).touchState || { joystick: { x: 0, y: 0 } };
             const keys: Record<string, boolean> = (window as any).pressedKeys || {};
 
             // --- MOVEMENT ---
@@ -311,47 +309,6 @@ const App: React.FC = () => {
             camera.x = camera.x * (1 - cameraLerpFactor) + cameraTargetX * cameraLerpFactor;
             camera.y = camera.y * (1 - cameraLerpFactor) + cameraTargetY * cameraLerpFactor;
 
-            // --- ITEM ACTIVATION ---
-            if ((keys[' '] || touchState.useItem) && player.heldItem) {
-                if (touchState.useItem) {
-                    (window as any).touchState.useItem = false; // Reset trigger
-                }
-                if (player.heldItem.type === ItemType.Candle && player.heldItem.variant) {
-                    const variant = player.heldItem.variant;
-                    const candleData = ITEM_DATA[ItemType.Candle].variants![variant];
-                    const rotations = candleData.rotations || 1;
-                    
-                    lastSkillUsed = { id: `${Date.now()}`, name: candleData.name, life: 2.0 };
-
-                    activeItems.push({
-                        id: `active_candle_${Date.now()}`,
-                        type: ItemType.Candle,
-                        variant: variant,
-                        life: candleData.duration,
-                        angle: 0,
-                        length: candleData.length,
-                        width: candleData.width,
-                        hitEnemyIds: [],
-                        rotationSpeed: (rotations * 2 * Math.PI) / candleData.duration,
-                    } as ActiveCandle);
-                    let healAmount = 0;
-                    let maxHealthChange = 0;
-                    let healText = '';
-                    switch (variant) {
-                        case 'Gake': maxHealthChange = player.maxHealth; player.maxHealth *= 2; healAmount = player.maxHealth - player.health; player.health = player.maxHealth; healText = 'BALANCE DOUBLED!'; break;
-                        case 'West': maxHealthChange = 20; healAmount = 20; player.maxHealth += maxHealthChange; player.health = Math.min(player.maxHealth, player.health + healAmount); healText = `+${healAmount} U`; break;
-                        case '奶牛candle': break;
-                    }
-                    if (healAmount > 0) addFloatingText(healText, player.x, player.y - 20, '#34D399');
-                    if (maxHealthChange !== 0) {
-                        const text = `Max U ${maxHealthChange > 0 ? '+' : ''}${maxHealthChange}`;
-                        const color = maxHealthChange > 0 ? '#FBBF24' : '#EF4444';
-                        addFloatingText(text, player.x, player.y, color);
-                    }
-                    player.heldItem = null;
-                }
-                (window as any).pressedKeys[' '] = false;
-            }
             
             // --- MC & BOSS LOGIC ---
             if (currentStatus === GameStatus.Playing) {
@@ -544,20 +501,66 @@ const App: React.FC = () => {
             });
             visualEffects = visualEffects.map((vfx: VisualEffect) => ({ ...vfx, life: vfx.life - delta })).filter((vfx: VisualEffect) => vfx.life > 0);
 
-            // --- ITEM COLLECTION ---
+            // --- ITEM COLLECTION & ACTIVATION ---
             itemDrops = itemDrops.filter(drop => {
-                const dx = player.x - drop.x; const dy = player.y - drop.y; const dist = Math.sqrt(dx * dx + dy * dy);
+                const dx = player.x - drop.x;
+                const dy = player.y - drop.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
                 if (dist < player.width / 2 + 15) {
-                    if (player.heldItem === null) {
-                        if (drop.type === ItemType.Candle) {
-                            const random = Math.random();
-                            let chosenVariant: CandleVariant = (random < 0.80) ? 'West' : (random < 0.90) ? '奶牛candle' : 'Gake';
-                            player.heldItem = { type: ItemType.Candle, variant: chosenVariant };
-                            const variantData = ITEM_DATA[ItemType.Candle].variants![chosenVariant];
-                            addFloatingText(`${variantData.name}!`, player.x, player.y, '#34D399');
+                    // Item collected, activate immediately
+                    if (drop.type === ItemType.Candle) {
+                        const random = Math.random();
+                        const chosenVariant: CandleVariant = (random < 0.80) ? 'West' : (random < 0.90) ? '奶牛candle' : 'Gake';
+                        const candleData = ITEM_DATA[ItemType.Candle].variants![chosenVariant];
+                        
+                        // Activation logic moved here
+                        const rotations = candleData.rotations || 1;
+                        
+                        lastSkillUsed = { id: `${Date.now()}`, name: candleData.name, life: 2.0 };
+
+                        activeItems.push({
+                            id: `active_candle_${Date.now()}`,
+                            type: ItemType.Candle,
+                            variant: chosenVariant,
+                            life: candleData.duration,
+                            angle: 0,
+                            length: candleData.length,
+                            width: candleData.width,
+                            hitEnemyIds: [],
+                            rotationSpeed: (rotations * 2 * Math.PI) / candleData.duration,
+                        } as ActiveCandle);
+                        
+                        let healAmount = 0;
+                        let maxHealthChange = 0;
+                        let healText = '';
+                        switch (chosenVariant) {
+                            case 'Gake':
+                                maxHealthChange = player.maxHealth;
+                                player.maxHealth *= 2;
+                                healAmount = player.maxHealth - player.health;
+                                player.health = player.maxHealth;
+                                healText = 'BALANCE DOUBLED!';
+                                break;
+                            case 'West':
+                                maxHealthChange = 20;
+                                healAmount = 20;
+                                player.maxHealth += maxHealthChange;
+                                player.health = Math.min(player.maxHealth, player.health + healAmount);
+                                healText = `+${healAmount} U`;
+                                break;
+                            case '奶牛candle':
+                                break;
                         }
-                        return false; // remove drop
+                        
+                        if (healAmount > 0) addFloatingText(healText, player.x, player.y - 20, '#34D399');
+                        if (maxHealthChange !== 0) {
+                            const text = `Max U ${maxHealthChange > 0 ? '+' : ''}${maxHealthChange}`;
+                            const color = maxHealthChange > 0 ? '#FBBF24' : '#EF4444';
+                            addFloatingText(text, player.x, player.y, color);
+                        }
                     }
+                    return false; // remove drop
                 }
                 return true; // keep drop
             });
@@ -879,10 +882,7 @@ const App: React.FC = () => {
         >
             {renderGameContent()}
             {isTouch && gameIsRunning && (
-                <>
-                    <VirtualJoystick />
-                    <SkillButton player={gameState.player} />
-                </>
+                <VirtualJoystick />
             )}
         </div>
     );

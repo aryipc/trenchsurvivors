@@ -20,7 +20,7 @@ const WEAPON_ICONS: Record<WeaponType, string> = {
 };
 
 export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, lastSkillUsed }) => {
-    const { health, maxHealth, xp, xpToNextLevel, level, heldItem, weapons } = player;
+    const { health, maxHealth, xp, xpToNextLevel, level, weapons } = player;
     const healthPercentage = (health / maxHealth) * 100;
     const xpPercentage = (xp / xpToNextLevel) * 100;
     
@@ -94,23 +94,6 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
                      </div>
                 )}
             </div>
-
-            {/* Held Item Display */}
-            {heldItem?.type === ItemType.Candle && heldItem.variant && !isTouch && (
-                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none z-10 text-shadow">
-                    <div className="bg-black/70 px-4 py-1.5 rounded-full text-white font-bold border-2 border-gray-500">
-                        {ITEM_DATA[ItemType.Candle].variants![heldItem.variant].name.toUpperCase()} - PRESS <span className="text-yellow-300 mx-1">SPACE</span> TO USE
-                    </div>
-                    <div className="w-14 h-20 bg-gray-800 border-4 border-yellow-300 rounded-lg shadow-lg flex flex-col items-center justify-center p-1 relative overflow-hidden">
-                        <img
-                            src={ITEM_DATA[ItemType.Candle].svg}
-                            alt={ITEM_DATA[ItemType.Candle].variants![heldItem.variant].name}
-                            className="h-16 w-auto"
-                            style={{ filter: 'drop-shadow(0 0 5px #10B981)'}}
-                        />
-                    </div>
-                </div>
-            )}
         </>
     );
 };
