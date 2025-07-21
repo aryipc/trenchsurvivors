@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 
 // A global object to hold the state, avoiding re-renders.
@@ -9,6 +10,16 @@ const touchState = {
 
 // Expose it to the game loop and other components.
 (window as any).touchState = touchState;
+
+// A global object for UI components to register their geometry.
+// This is initialized here to ensure it exists before components mount.
+if (!(window as any).controlGeometries) {
+    (window as any).controlGeometries = {
+        joystick: null as DOMRect | null,
+        skillButton: null as DOMRect | null,
+    };
+}
+
 
 // A more precise, reusable function for circular hit detection.
 const isInsideCircle = (touch: Touch, centerX: number, centerY: number, radius: number): boolean => {
@@ -35,32 +46,6 @@ export const useTouchControls = (enabled: boolean) => {
             touchState.useItem = false;
             return; // Don't attach listeners
         }
-
-        // --- Define control geometry based on CSS ---
-        const joystickDef = { left: 48, bottom: 112, size: 120 };
-        const skillButtonDef = { right: 48, bottom: 124, size: 96 };
-
-        // Calculates the real-time geometry of the controls.
-        const getControlsGeometry = () => {
-             const vh = window.innerHeight;
-             const vw = window.innerWidth;
-             
-             const joyRadius = joystickDef.size / 2;
-             const skillRadius = skillButtonDef.size / 2;
-             
-             return {
-                joystick: {
-                    cx: joystickDef.left + joyRadius,
-                    cy: vh - joystickDef.bottom - joyRadius,
-                    radius: joyRadius,
-                },
-                skillButton: {
-                    cx: vw - skillButtonDef.right - skillRadius,
-                    cy: vh - skillButtonDef.bottom - skillRadius,
-                    radius: skillRadius
-                }
-             };
-        };
         
         const updateJoystick = (clientX: number, clientY: number) => {
             let diffX = clientX - joystickBasePos.current.x;
@@ -75,20 +60,20 @@ export const useTouchControls = (enabled: boolean) => {
         };
 
         const handleTouchStart = (e: TouchEvent) => {
-            const controls = getControlsGeometry();
+            const { joystick: joyRect, skillButton: skillRect } = (window as any).controlGeometries;
             let gameControlTouched = false;
 
             for (const touch of Array.from(e.changedTouches)) {
                 // Check for skill button first
-                if (isInsideCircle(touch, controls.skillButton.cx, controls.skillButton.cy, controls.skillButton.radius)) {
+                if (skillRect && isInsideCircle(touch, skillRect.left + skillRect.width / 2, skillRect.top + skillRect.height / 2, skillRect.width / 2)) {
                     touchState.useItem = true;
                     gameControlTouched = true;
                     continue; 
                 }
                 // Check for joystick if no pointer is already active
-                if (joystickPointerId.current === null && isInsideCircle(touch, controls.joystick.cx, controls.joystick.cy, controls.joystick.radius)) {
+                if (joystickPointerId.current === null && joyRect && isInsideCircle(touch, joyRect.left + joyRect.width / 2, joyRect.top + joyRect.height / 2, joyRect.width / 2)) {
                     joystickPointerId.current = touch.identifier;
-                    joystickBasePos.current = { x: controls.joystick.cx, y: controls.joystick.cy };
+                    joystickBasePos.current = { x: joyRect.left + joyRect.width / 2, y: joyRect.top + joyRect.height / 2 };
                     updateJoystick(touch.clientX, touch.clientY);
                     gameControlTouched = true;
                 }

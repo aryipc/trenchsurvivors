@@ -1,8 +1,10 @@
 
 import React, { useRef, useEffect } from 'react';
 
-// This component is now purely for display.
-// It reads its state from the global `window.touchState` object.
+/**
+ * This component is now responsible for display AND for registering its hitbox
+ * with the global touch system using getBoundingClientRect.
+ */
 const VirtualJoystick: React.FC = () => {
     const baseRef = useRef<HTMLDivElement>(null);
     const stickRef = useRef<HTMLDivElement>(null);
@@ -12,6 +14,29 @@ const VirtualJoystick: React.FC = () => {
     const stickSize = 60;
     const maxDiff = baseSize / 2;
 
+    // Effect for registering the hitbox for the global touch handler.
+    useEffect(() => {
+        const updateGeometry = () => {
+            if (baseRef.current && (window as any).controlGeometries) {
+                (window as any).controlGeometries.joystick = baseRef.current.getBoundingClientRect();
+            }
+        };
+        
+        // A small delay to ensure layout is stable before getting the rect.
+        const timeoutId = setTimeout(updateGeometry, 50);
+        window.addEventListener('resize', updateGeometry);
+        
+        return () => {
+            clearTimeout(timeoutId);
+            window.removeEventListener('resize', updateGeometry);
+            // Clean up global state when component unmounts
+            if ((window as any).controlGeometries) {
+                (window as any).controlGeometries.joystick = null;
+            }
+        };
+    }, []);
+
+    // Effect for updating the visual representation of the stick based on global state.
     useEffect(() => {
         const updateStick = () => {
             if (stickRef.current && (window as any).touchState) {
