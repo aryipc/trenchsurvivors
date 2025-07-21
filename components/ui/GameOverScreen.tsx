@@ -10,6 +10,7 @@ interface GameOverScreenProps {
     onBackToHome: () => void;
     isNewHighScore: boolean;
     username: CurrentUser | null;
+    videoUrl: string | null;
 }
 
 const COMMENTARY_TIERS: { [key: string]: string[] } = {
@@ -53,7 +54,7 @@ const getCommentary = (marketCap: number): string => {
     return tier[Math.floor(Math.random() * tier.length)];
 };
 
-const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, marketCap, maxBalance, onRestart, onBackToHome, isNewHighScore, username }) => {
+const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, marketCap, maxBalance, onRestart, onBackToHome, isNewHighScore, username, videoUrl }) => {
     const [commentary, setCommentary] = useState('');
 
     useEffect(() => {
@@ -69,7 +70,7 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, marketCap, maxBa
     };
 
     return (
-        <div className="absolute inset-0 bg-black bg-opacity-80 flex flex-col justify-center items-center z-30 text-white p-4">
+        <div className="absolute inset-0 bg-black bg-opacity-80 flex flex-col justify-center items-center z-30 text-white p-4 overflow-y-auto">
             <h1 className="text-8xl font-cinzel text-red-500 mb-2 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">RUG PULLED</h1>
             <p className="text-gray-300 text-xl mb-6 text-center italic">"{commentary}"</p>
             
@@ -86,7 +87,20 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, marketCap, maxBa
                 <p>You flipped <span className="text-yellow-300 font-bold">{score}</span> fuds</p>
             </div>
             
-            <div className="flex flex-col items-center gap-2">
+            {videoUrl && (
+                <div className="my-4 p-4 bg-gray-800/80 rounded-lg border-2 border-green-400 w-full max-w-sm text-center shadow-lg">
+                    <h3 className="text-xl font-bold mb-3 text-white">Recording Ready</h3>
+                    <a
+                        href={videoUrl}
+                        download={`trench-survivors-run-${new Date().toISOString().split('T')[0]}.webm`}
+                        className="inline-block bg-green-500 text-gray-900 font-bold py-2 px-6 rounded-lg text-lg font-cinzel hover:bg-green-400 transition-colors"
+                    >
+                        Download Video
+                    </a>
+                </div>
+            )}
+
+            <div className="flex flex-col items-center gap-2 mt-4">
                 <button
                     onClick={onRestart}
                     className="bg-yellow-400 text-gray-900 font-bold py-4 px-10 rounded-lg text-2xl font-cinzel hover:bg-yellow-300 transition-colors transform hover:scale-105"

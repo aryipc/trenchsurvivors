@@ -1,7 +1,5 @@
 
 
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import GameScreen from './components/GameScreen';
 import { Hud } from './components/ui/Hud';
@@ -73,6 +71,11 @@ const App: React.FC = () => {
     const [settings, updateSettings] = useSettings();
     const [pausedFromStatus, setPausedFromStatus] = useState<GameStatus | null>(null);
 
+    // Screen Recording State
+    const [isRecording, setIsRecording] = useState(false);
+    const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+    const [videoUrl, setVideoUrl] = useState<string | null>(null);
+
     const gameIsRunning = gameState.status === GameStatus.Playing || gameState.status === GameStatus.BossFight;
     const { isTouch } = useTouchControls(gameIsRunning);
 
@@ -105,8 +108,6 @@ const App: React.FC = () => {
             if (document.hidden) {
                 pauseGame();
             } else {
-                // On some systems, focus fires before visibilitychange.
-                // Resuming here ensures we catch the user coming back to the tab.
                 resumeGame();
             }
         };
@@ -122,8 +123,71 @@ const App: React.FC = () => {
         };
     }, [pausedFromStatus]);
 
+    const cleanupVideo = useCallback(() => {
+        if (videoUrl) {
+            URL.revokeObjectURL(videoUrl);
+            setVideoUrl(null);
+        }
+        if (mediaRecorder) {
+            if(mediaRecorder.state === 'recording'){
+                mediaRecorder.stop();
+            }
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            setMediaRecorder(null);
+        }
+        setIsRecording(false);
+    }, [videoUrl, mediaRecorder]);
+
+    const handleStartRecording = async () => {
+        if (isRecording || mediaRecorder) return;
+        
+        cleanupVideo();
+
+        try {
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: true,
+                audio: false
+            });
+
+            const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            setMediaRecorder(recorder);
+            
+            // Handle user stopping sharing via browser UI
+            stream.getVideoTracks()[0].onended = () => {
+                if (recorder.state === 'recording') {
+                    recorder.stop();
+                }
+            };
+
+            const chunks: Blob[] = [];
+            recorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    chunks.push(event.data);
+                }
+            };
+
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                setVideoUrl(url);
+                setIsRecording(false);
+                setMediaRecorder(null);
+                 // Clean up the stream tracks
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            recorder.start();
+            setIsRecording(true);
+        } catch (err) {
+            console.error("Error starting recording:", err);
+            setIsRecording(false);
+            setMediaRecorder(null);
+        }
+    };
+
 
     const handleStartGame = (user: CurrentUser | null) => {
+        cleanupVideo();
         const initialPlayer: Player = {
             id: 'player',
             x: GAME_AREA_WIDTH / 2,
@@ -186,6 +250,7 @@ const App: React.FC = () => {
     };
 
     const handleBackToMenu = () => {
+        cleanupVideo();
         setGameState(prev => ({ ...prev, status: GameStatus.NotStarted, isNewHighScore: false }));
     };
 
@@ -522,16 +587,12 @@ const App: React.FC = () => {
                 if (dist < player.width / 2 + 15) {
                     // Item collected, activate immediately
                     if (drop.type === ItemType.Candle) {
-                        // If the drop has a specified variant (like the starting one), use it.
-                        // Otherwise, pick a random variant for drops from enemies.
                         const chosenVariant: CandleVariant = drop.variant || (() => {
                             const random = Math.random();
-                            return (random < 0.80) ? 'West' : (random < 0.90) ? '奶牛candle' : 'Gake';
+                            return (random < 0.65) ? 'West' : (random < 0.90) ? '奶牛candle' : 'Gake';
                         })();
                         
                         const candleData = ITEM_DATA[ItemType.Candle].variants![chosenVariant];
-                        
-                        // Activation logic moved here
                         const rotations = candleData.rotations || 1;
                         
                         lastSkillUsed = { id: `${Date.now()}`, name: candleData.name, life: 2.0 };
@@ -617,22 +678,12 @@ const App: React.FC = () => {
                     });
                 } else if (p.owner === 'enemy') {
                     if (p.isBossProjectile) {
-                        // Capsule collision for the boss's "candle" projectile
-                        const len = p.width; // Length of the candle
-                        const thick = p.height; // Thickness of the candle
-                        const x1 = p.x - (p.dx || 0) * len / 2;
-                        const y1 = p.y - (p.dy || 0) * len / 2;
-                        const x2 = p.x + (p.dx || 0) * len / 2;
-                        const y2 = p.y + (p.dy || 0) * len / 2;
-                        const seg_dx = x2 - x1;
-                        const seg_dy = y2 - y1;
-                        const l2 = seg_dx * seg_dx + seg_dy * seg_dy;
-                        let t = 0;
-                        if (l2 > 0) {
-                            t = Math.max(0, Math.min(1, ((player.x - x1) * seg_dx + (player.y - y1) * seg_dy) / l2));
-                        }
-                        const closestX = x1 + t * seg_dx;
-                        const closestY = y1 + t * seg_dy;
+                        const len = p.width; const thick = p.height;
+                        const x1 = p.x - (p.dx || 0) * len / 2; const y1 = p.y - (p.dy || 0) * len / 2;
+                        const x2 = p.x + (p.dx || 0) * len / 2; const y2 = p.y + (p.dy || 0) * len / 2;
+                        const seg_dx = x2 - x1; const seg_dy = y2 - y1; const l2 = seg_dx * seg_dx + seg_dy * seg_dy;
+                        let t = 0; if (l2 > 0) { t = Math.max(0, Math.min(1, ((player.x - x1) * seg_dx + (player.y - y1) * seg_dy) / l2)); }
+                        const closestX = x1 + t * seg_dx; const closestY = y1 + t * seg_dy;
                         const distToBeam = Math.sqrt(Math.pow(player.x - closestX, 2) + Math.pow(player.y - closestY, 2));
 
                         if (distToBeam < (player.width / 2) + (thick / 2)) {
@@ -642,9 +693,7 @@ const App: React.FC = () => {
                             hit = true;
                         }
                     } else {
-                        // Standard circular collision for other enemy projectiles
-                        const dx = player.x - p.x;
-                        const dy = player.y - p.y;
+                        const dx = player.x - p.x; const dy = player.y - p.y;
                         const dist = Math.sqrt(dx * dx + dy * dy);
                         if (dist < player.width / 2 + p.width / 2) {
                             player.health -= p.damage;
@@ -667,10 +716,10 @@ const App: React.FC = () => {
             visualEffects.forEach(vfx => {
                 if(vfx.type === 'shockwave') {
                     const currentRadius = vfx.radius * (1 - (vfx.life / vfx.totalLife));
-                    const shockwaveThickness = 30; // how wide the damaging ring is
+                    const shockwaveThickness = 30;
                     const distToPlayer = Math.sqrt(Math.pow(player.x - vfx.x, 2) + Math.pow(player.y - vfx.y, 2));
                     if(Math.abs(distToPlayer - currentRadius) < (player.width / 2 + shockwaveThickness / 2)) {
-                        player.health -= 20; // Shockwave damage
+                        player.health -= 20;
                         addFloatingText('20', player.x, player.y, '#ef4444');
                         if (settings.screenShake) camera.shake = { duration: 0.3, intensity: 6 };
                     }
@@ -678,7 +727,6 @@ const App: React.FC = () => {
             });
 
             enemies.forEach(e => {
-                // HODLer Area Damage
                 if (hodlerAreaWeapon) {
                     const auraData = WEAPON_DATA[WeaponType.HODLerArea]; const radius = (auraData.radius || 50) + (hodlerAreaWeapon.level - 1) * 15;
                     const dx = e.x - player.x; const dy = e.y - player.y; const dist = Math.sqrt(dx * dx + dy * dy);
@@ -688,7 +736,6 @@ const App: React.FC = () => {
                     }
                 }
                 
-                // Trading Bot Damage
                 if (tradingBotWeapon) {
                     const botData = WEAPON_DATA[WeaponType.TradingBot]; const lastHitTime = e.lastHitBy[WeaponType.TradingBot] || 0;
                     if (gameTime > lastHitTime + (botData.hitCooldown || 0.5)) {
@@ -703,7 +750,6 @@ const App: React.FC = () => {
                     }
                 }
 
-                // Laser Eyes Damage
                 if (activeLaser && activeLaserTarget) {
                     const x1 = player.x, y1 = player.y; const x2 = activeLaserTarget.x, y2 = activeLaserTarget.y;
                     const l2 = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
@@ -716,7 +762,6 @@ const App: React.FC = () => {
                     }
                 }
 
-                 // Active Item Damage (Candle)
                 activeItems.forEach((item: ActiveItem) => {
                     if (e.health > 0 && item.type === ItemType.Candle && !item.hitEnemyIds.includes(e.id)) {
                         const candle = item as ActiveCandle; const x1 = player.x, y1 = player.y;
@@ -725,14 +770,7 @@ const App: React.FC = () => {
                         const closestX = x1 + t * (x2 - x1); const closestY = y1 + t * (y2 - y1);
                         const distToBeam = Math.sqrt(Math.pow(e.x - closestX, 2) + Math.pow(e.y - closestY, 2));
                         if (distToBeam < (candle.width / 2) + (e.width / 2)) {
-                            if (candle.variant === '奶牛candle') { 
-                                e.health -= 5; 
-                                addFloatingText('5', e.x, e.y, '#FF8C00'); 
-                            } else { // Gake and West
-                                const damage = 10000;
-                                e.health -= damage; 
-                                addFloatingText(damage.toString(), e.x, e.y, '#34D399'); 
-                            }
+                            if (candle.variant === '奶牛candle') { e.health -= 5; addFloatingText('5', e.x, e.y, '#FF8C00'); } else { const damage = 10000; e.health -= damage; addFloatingText(damage.toString(), e.x, e.y, '#34D399'); }
                             candle.hitEnemyIds.push(e.id);
                         }
                     }
@@ -740,10 +778,7 @@ const App: React.FC = () => {
 
                 if (e.health <= 0) {
                     if (e.isBoss) { 
-                        currentStatus = GameStatus.Playing;
-                        bossState = null;
-                        marketCap = 71000;
-                        bossHasBeenDefeated = true;
+                        currentStatus = GameStatus.Playing; bossState = null; marketCap = 71000; bossHasBeenDefeated = true;
                         addFloatingText('MARKET STABILIZED', player.x, player.y - 40, '#34D399');
                         addFloatingText('MC BREAKTHROUGH!', player.x, player.y, '#FBBF24');
                     }
@@ -751,10 +786,7 @@ const App: React.FC = () => {
                     if (Math.random() < ITEM_DROP_CHANCE) itemDrops.push({ id: `item_${e.id}`, x: e.x, y: e.y, type: ItemType.Candle });
                 } else {
                     const dx = player.x - e.x; const dy = player.y - e.y; const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < player.width / 2 + e.width / 2) {
-                        player.health -= e.damage;
-                        if (settings.screenShake) camera.shake = { duration: 0.2, intensity: 4 };
-                    }
+                    if (dist < player.width / 2 + e.width / 2) { player.health -= e.damage; if (settings.screenShake) camera.shake = { duration: 0.2, intensity: 4 }; }
                     newEnemies.push(e);
                 }
             });
@@ -766,7 +798,6 @@ const App: React.FC = () => {
             newGems.forEach(gem => { const dx = player.x - gem.x; const dy = player.y - gem.y; const dist = Math.sqrt(dx * dx + dy * dy); if (dist < player.width / 2 + 10) player.xp += gem.value; else remainingGems.push(gem); });
             gems = remainingGems;
 
-            // --- GAME STATE CHECKS ---
             if (player.health <= 0 || (prev.status === GameStatus.BossFight && marketCap <= STARTING_MC)) {
                 currentStatus = GameStatus.GameOver;
             }
@@ -781,46 +812,25 @@ const App: React.FC = () => {
 
             const newMaxBalanceAchieved = Math.max(prev.maxBalanceAchieved, player.health);
 
-            return {
-                ...prev, 
-                status: currentStatus, 
-                player, 
-                enemies, 
-                projectiles, 
-                gems, 
-                floatingTexts, 
-                airdrops, 
-                visualEffects, 
-                itemDrops, 
-                activeItems, 
-                gameTime, 
-                marketCap: Math.max(marketCap, STARTING_MC), // Clamp final market cap
-                maxBalanceAchieved: newMaxBalanceAchieved,
-                kills, 
-                orbitAngle, 
-                activeLaser, 
-                bossState,
-                bossHasBeenDefeated,
-                camera,
-                lastSkillUsed,
-            };
+            return { ...prev, status: currentStatus, player, enemies, projectiles, gems, floatingTexts, airdrops, visualEffects, itemDrops, activeItems, gameTime, marketCap: Math.max(marketCap, STARTING_MC), maxBalanceAchieved: newMaxBalanceAchieved, kills, orbitAngle, activeLaser, bossState, bossHasBeenDefeated, camera, lastSkillUsed };
         });
     }, [handleLevelUp, isTouch, settings]);
 
     useGameLoop(gameTick, gameState.status === GameStatus.Playing || gameState.status === GameStatus.BossFight);
 
     useEffect(() => {
-        // Post score to leaderboard when game is over
+        if (gameState.status === GameStatus.GameOver && isRecording && mediaRecorder) {
+            if (mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+        }
+    }, [gameState.status, isRecording, mediaRecorder]);
+
+    useEffect(() => {
         if (gameState.status === GameStatus.GameOver && gameState.currentUser && !gameState.isNewHighScore) {
             const postScore = async () => {
                 const newHighScore = await addScore(gameState.currentUser!, gameState.marketCap, gameState.maxBalanceAchieved);
-                // Only update state if the component is still mounted and the game is over
-                setGameState(prev => {
-                    if (prev.status === GameStatus.GameOver) {
-                        return { ...prev, isNewHighScore: newHighScore };
-                    }
-                    return prev;
-                });
+                setGameState(prev => { if (prev.status === GameStatus.GameOver) { return { ...prev, isNewHighScore: newHighScore }; } return prev; });
             };
             postScore();
         }
@@ -829,78 +839,37 @@ const App: React.FC = () => {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => { (window as any).pressedKeys = (window as any).pressedKeys || {}; if ((window as any).pressedKeys[e.key] !== true) (window as any).pressedKeys[e.key] = true; };
         const handleKeyUp = (e: KeyboardEvent) => { (window as any).pressedKeys = (window as any).pressedKeys || {}; (window as any).pressedKeys[e.key] = false; };
-        window.addEventListener('keydown', handleKeyDown);
-        window.addEventListener('keyup', handleKeyUp);
+        window.addEventListener('keydown', handleKeyDown); window.addEventListener('keyup', handleKeyUp);
         return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('keyup', handleKeyUp); };
     }, []);
 
     const renderGameContent = () => {
         switch (gameState.status) {
             case GameStatus.NotStarted:
-                return <StartScreen 
-                            onStart={handleStartGame} 
-                            onShowLeaderboard={handleShowLeaderboard}
-                            settings={settings}
-                            onUpdateSettings={updateSettings}
-                        />;
+                return <StartScreen onStart={handleStartGame} onShowLeaderboard={handleShowLeaderboard} settings={settings} onUpdateSettings={updateSettings} />;
             case GameStatus.Leaderboard:
                 return <LeaderboardScreen scores={leaderboard} onBack={handleBackToMenu} loading={leaderboardLoading} />;
             case GameStatus.GameOver:
-                return <GameOverScreen 
-                            score={gameState.kills} 
-                            marketCap={gameState.marketCap} 
-                            maxBalance={gameState.maxBalanceAchieved}
-                            onRestart={() => handleStartGame(gameState.currentUser)}
-                            onBackToHome={handleBackToMenu}
-                            isNewHighScore={gameState.isNewHighScore}
-                            username={gameState.currentUser}
-                        />;
+                return <GameOverScreen score={gameState.kills} marketCap={gameState.marketCap} maxBalance={gameState.maxBalanceAchieved} onRestart={() => handleStartGame(gameState.currentUser)} onBackToHome={handleBackToMenu} isNewHighScore={gameState.isNewHighScore} username={gameState.currentUser} videoUrl={videoUrl} />;
             case GameStatus.Playing:
             case GameStatus.BossFight:
             case GameStatus.LevelUp:
             case GameStatus.Paused:
                 return (
                     <>
-                        <Hud 
-                            player={gameState.player} 
-                            marketCap={gameState.marketCap} 
-                            kills={gameState.kills} 
-                            status={gameState.status} 
-                            isTouch={isTouch}
-                            lastSkillUsed={gameState.lastSkillUsed}
-                        />
+                        <Hud player={gameState.player} marketCap={gameState.marketCap} kills={gameState.kills} status={gameState.status} isTouch={isTouch} lastSkillUsed={gameState.lastSkillUsed} onStartRecording={handleStartRecording} isRecording={isRecording} />
                         <GameScreen gameState={gameState} isTouch={isTouch} />
-                       
-                        {gameState.status === GameStatus.LevelUp && (
-                            <LevelUpModal
-                                options={upgradeOptions}
-                                onSelect={handleUpgradeSelected}
-                                descriptions={descriptions}
-                                loading={loadingDescriptions}
-                            />
-                        )}
-
-                        {gameState.status === GameStatus.Paused && (
-                            <div className="absolute inset-0 bg-black/60 flex justify-center items-center z-50 backdrop-blur-sm">
-                                <h2 className="text-7xl font-cinzel text-yellow-300 text-shadow animate-pulse">
-                                    PAUSED
-                                </h2>
-                            </div>
-                        )}
+                        {gameState.status === GameStatus.LevelUp && ( <LevelUpModal options={upgradeOptions} onSelect={handleUpgradeSelected} descriptions={descriptions} loading={loadingDescriptions} /> )}
+                        {gameState.status === GameStatus.Paused && ( <div className="absolute inset-0 bg-black/60 flex justify-center items-center z-50 backdrop-blur-sm"> <h2 className="text-7xl font-cinzel text-yellow-300 text-shadow animate-pulse"> PAUSED </h2> </div> )}
                     </>
                 );
         }
     };
 
     return (
-        <div 
-            className="relative w-screen h-screen overflow-hidden bg-gray-800 text-white select-none"
-            style={{ touchAction: 'none' }}
-        >
+        <div className="relative w-screen h-screen overflow-hidden bg-gray-800 text-white select-none" style={{ touchAction: 'none' }} >
             {renderGameContent()}
-            {isTouch && gameIsRunning && (
-                <VirtualJoystick />
-            )}
+            {isTouch && gameIsRunning && ( <VirtualJoystick /> )}
         </div>
     );
 };
