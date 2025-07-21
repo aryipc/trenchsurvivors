@@ -15,24 +15,26 @@ const SkillButton: React.FC<SkillButtonProps> = ({ player, onUseItem }) => {
         const buttonElement = buttonRef.current;
         if (!buttonElement) return;
 
-        const handlePointerDown = (e: PointerEvent) => {
-            // Prevent default browser actions like text selection or context menu.
+        // Use 'touchstart' for more reliable mobile interaction, especially with multitouch.
+        const handleTouchStart = (e: TouchEvent) => {
+            // Prevent default browser actions like zooming on double tap or context menus.
             e.preventDefault();
             // Stop the event from bubbling up to parent elements.
             e.stopPropagation();
             onUseItem();
         };
+        
+        // The { passive: false } is crucial to allow preventDefault() to work on touch events.
+        buttonElement.addEventListener('touchstart', handleTouchStart, { passive: false });
 
-        // Using a native event listener to bypass React's synthetic event system.
-        // This can resolve conflicts with other complex touch handlers like the joystick.
-        buttonElement.addEventListener('pointerdown', handlePointerDown);
-
+        // Cleanup the event listener when the component unmounts.
         return () => {
             if (buttonElement) {
-                buttonElement.removeEventListener('pointerdown', handlePointerDown);
+                buttonElement.removeEventListener('touchstart', handleTouchStart);
             }
         };
     }, [onUseItem]); // Dependency array ensures the effect is managed correctly.
+
 
     if (!heldItem || heldItem.type !== ItemType.Candle || !heldItem.variant) {
         return null;
@@ -46,7 +48,7 @@ const SkillButton: React.FC<SkillButtonProps> = ({ player, onUseItem }) => {
            type="button"
            className="absolute bottom-[124px] right-12 z-50 w-24 h-24 bg-gray-800/80 border-4 border-yellow-300 rounded-full shadow-lg flex items-center justify-center active:bg-yellow-400/50 p-0 appearance-none"
            aria-label="Use Item"
-           style={{ touchAction: 'none' }} // Crucial for pointer events
+           style={{ touchAction: 'none' }} // Crucial for pointer/touch events
         >
            <img
                src={ITEM_DATA[ItemType.Candle].svg}

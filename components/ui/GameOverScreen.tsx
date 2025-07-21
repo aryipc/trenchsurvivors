@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CurrentUser } from '../../types';
 
 interface GameOverScreenProps {
@@ -12,7 +12,54 @@ interface GameOverScreenProps {
     username: CurrentUser | null;
 }
 
+const COMMENTARY_TIERS: { [key: string]: string[] } = {
+    shame: [
+        "That was... a warm-up?",
+        "You bought the top AND held the bag.",
+        "Even the dev gave up on you.",
+        "A true paper-handed Trencher.",
+    ],
+    novice: [
+        "Not bad, but you still got rugged like a rookie.",
+        "You sniffed the pump, but couldn’t ride it.",
+        "Almost made it. Almost.",
+        "Honorably discharged from the trenches.",
+    ],
+    seasoned: [
+        "You saw the top... and ignored it.",
+        "You fought bravely. Then you round-tripped.",
+        "Certified Trencher. But still got slapped.",
+        "You made it out alive — barely.",
+    ],
+    legendary: [
+        "Now that’s how a Trencher dies with glory.",
+        "Your bags were almost worth framing.",
+        "Legendary ape. Rugged with pride.",
+        "They’ll write songs about your pump.",
+    ],
+};
+
+const getCommentary = (marketCap: number): string => {
+    let tier: string[];
+    if (marketCap < 10000) {
+        tier = COMMENTARY_TIERS.shame;
+    } else if (marketCap < 30000) {
+        tier = COMMENTARY_TIERS.novice;
+    } else if (marketCap < 70000) {
+        tier = COMMENTARY_TIERS.seasoned;
+    } else {
+        tier = COMMENTARY_TIERS.legendary;
+    }
+    return tier[Math.floor(Math.random() * tier.length)];
+};
+
 const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, marketCap, maxBalance, onRestart, onBackToHome, isNewHighScore, username }) => {
+    const [commentary, setCommentary] = useState('');
+
+    useEffect(() => {
+        setCommentary(getCommentary(marketCap));
+    }, [marketCap]);
+
     const formatMarketCap = (value: number) => {
         return `$${Math.floor(value).toLocaleString()}`;
     };
@@ -23,7 +70,8 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, marketCap, maxBa
 
     return (
         <div className="absolute inset-0 bg-black bg-opacity-80 flex flex-col justify-center items-center z-30 text-white p-4">
-            <h1 className="text-8xl font-cinzel text-red-500 mb-4 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">RUG PULLED</h1>
+            <h1 className="text-8xl font-cinzel text-red-500 mb-2 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">RUG PULLED</h1>
+            <p className="text-gray-300 text-xl mb-6 text-center italic">"{commentary}"</p>
             
             {isNewHighScore && username && (
                  <div className="bg-green-500 text-white font-bold text-2xl py-2 px-6 rounded-lg mb-6 animate-pulse flex items-center gap-4">
