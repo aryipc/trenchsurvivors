@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import GameScreen from './components/GameScreen';
 import { Hud } from './components/ui/Hud';
@@ -68,7 +69,7 @@ const App: React.FC = () => {
     const [loadingDescriptions, setLoadingDescriptions] = useState(false);
     const [leaderboard, setLeaderboard] = useState<ScoreEntry[]>([]);
     const [leaderboardLoading, setLeaderboardLoading] = useState(false);
-    const { isTouch, handleJoystickMove, handleUseItem } = useTouchControls();
+    const { isTouch } = useTouchControls();
     const [settings, updateSettings] = useSettings();
     const [pausedFromStatus, setPausedFromStatus] = useState<GameStatus | null>(null);
 
@@ -877,8 +878,8 @@ const App: React.FC = () => {
             {renderGameContent()}
             {isTouch && (gameState.status === GameStatus.Playing || gameState.status === GameStatus.BossFight) && (
                 <>
-                    <VirtualJoystick onMove={handleJoystickMove} />
-                    <SkillButton player={gameState.player} onUseItem={handleUseItem} />
+                    <VirtualJoystick />
+                    <SkillButton player={gameState.player} />
                 </>
             )}
         </div>
