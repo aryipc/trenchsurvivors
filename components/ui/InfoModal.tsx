@@ -55,10 +55,10 @@ const InfoModal: React.FC<InfoModalProps> = ({ onClose }) => {
                 
                 <Section title="Tech Arsenal">
                     {Object.values(WeaponType).map(type => (
-                        <InfoItem key={type} icon={ICONS[type]} name={type}>
-                            {STATIC_DESCRIPTIONS[type][0]}
-                        </InfoItem>
-                    ))}
+                            <InfoItem key={type} icon={ICONS[type]} name={type}>
+                                {STATIC_DESCRIPTIONS[type][0]}
+                            </InfoItem>
+                        ))}
                 </Section>
                 
                 <Section title="Market Threats">
@@ -82,10 +82,12 @@ const InfoModal: React.FC<InfoModalProps> = ({ onClose }) => {
                 </Section>
 
                 <Section title="Special Items">
-                    {Object.values(ItemType).map(type => {
+                    {Object.values(ItemType)
+                        .filter(type => type !== ItemType.BONKAura)
+                        .map(type => {
                         return (
                             <InfoItem key={type} icon={ICONS[type]} name={type}>
-                                A powerful one-time use item dropped by enemies. Press SPACE to activate.
+                                A powerful, one-time use item dropped by enemies. It activates automatically when you walk over it.
                             </InfoItem>
                         )
                     })}

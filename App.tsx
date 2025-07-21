@@ -2,6 +2,10 @@
 
 
 
+
+
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import GameScreen from './components/GameScreen';
 import { Hud } from './components/ui/Hud';
@@ -15,7 +19,7 @@ import { useGameLoop } from './hooks/useGameLoop';
 import { useTouchControls } from './hooks/useTouch';
 import { useSettings } from './hooks/useSettings';
 import { GameState, Player, Enemy, Projectile, ExperienceGem, GameStatus, WeaponType, Weapon, UpgradeOption, FloatingText, EnemyType, Airdrop, VisualEffect, LaserBeam, ItemDrop, ActiveItem, ActiveCandle, CandleVariant, ItemType, ScoreEntry, CurrentUser, Settings } from './types';
-import { WEAPON_DATA, ENEMY_DATA, LEVEL_THRESHOLDS, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, ITEM_DROP_CHANCE, ITEM_DATA, BOSS_SPAWN_MC, MC_PER_SECOND, STARTING_MC, MC_VOLATILITY_INTERVAL, MC_VOLATILITY_AMOUNT, BOSS_RANGED_ATTACK_COOLDOWN, BOSS_RANGED_ATTACK_DAMAGE, BOSS_RANGED_ATTACK_SPEED, BOSS_PROJECTILE_WIDTH, BOSS_PROJECTILE_HEIGHT } from './constants';
+import { WEAPON_DATA, ENEMY_DATA, LEVEL_THRESHOLDS, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, ITEM_DROP_CHANCE, ITEM_DATA, BOSS_SPAWN_MC, MC_PER_SECOND, STARTING_MC, MC_VOLATILITY_INTERVAL, MC_VOLATILITY_AMOUNT, BOSS_RANGED_ATTACK_COOLDOWN, BOSS_RANGED_ATTACK_DAMAGE, BOSS_RANGED_ATTACK_SPEED, BOSS_PROJECTILE_WIDTH, BOSS_PROJECTILE_HEIGHT, BOSS_RED_CANDLE_COOLDOWN, BOSS_RED_CANDLE_WARNING_DURATION, BOSS_RED_CANDLE_WIDTH, BOSS_RED_CANDLE_ATTACK_DURATION, BOSS_RED_CANDLE_DAMAGE_PER_SEC } from './constants';
 import { getUpgradeOptions } from './utils/upgradeHelper';
 import { generateBatchDescriptions } from './services/geminiService';
 import { getLeaderboard, addScore } from './services/leaderboardService';
@@ -62,6 +66,12 @@ const App: React.FC = () => {
             currentUser: null,
             isNewHighScore: false,
             lastSkillUsed: null,
+            specialEventMessage: null,
+            isHardMode: false,
+            bonkMode: null,
+            airdropBonkEvent: null,
+            isPaperHandsUpgraded: false,
+            upcomingRedCandleAttack: null,
         };
     });
 
@@ -142,11 +152,10 @@ const App: React.FC = () => {
             avatarUrl: user?.avatarUrl,
         };
 
-        // Create a specific 'Gake' candle item drop and place it above the player
-        const startingItemDrop: ItemDrop = {
+        const startingCandle: ItemDrop = {
             id: `item_start_gake_${Date.now()}`,
-            x: initialPlayer.x,
-            y: initialPlayer.y - 80, // Place it above the player
+            x: initialPlayer.x + 80,
+            y: initialPlayer.y,
             type: ItemType.Candle,
             variant: 'Gake',
         };
@@ -160,7 +169,7 @@ const App: React.FC = () => {
             floatingTexts: [],
             airdrops: [],
             visualEffects: [],
-            itemDrops: [startingItemDrop],
+            itemDrops: [startingCandle],
             activeItems: [],
             activeLaser: null,
             gameTime: 0,
@@ -174,6 +183,12 @@ const App: React.FC = () => {
             currentUser: user,
             isNewHighScore: false,
             lastSkillUsed: null,
+            specialEventMessage: null,
+            isHardMode: false,
+            bonkMode: null,
+            airdropBonkEvent: null,
+            isPaperHandsUpgraded: false,
+            upcomingRedCandleAttack: null,
         });
     };
 
@@ -242,7 +257,7 @@ const App: React.FC = () => {
         setGameState(prev => {
             if (prev.status !== GameStatus.Playing && prev.status !== GameStatus.BossFight) return prev;
 
-            let { player, enemies, projectiles, gems, floatingTexts, airdrops, visualEffects, itemDrops, activeItems, gameTime, marketCap, kills, orbitAngle, activeLaser, bossState, bossHasBeenDefeated, camera, lastSkillUsed } = JSON.parse(JSON.stringify(prev));
+            let { player, enemies, projectiles, gems, floatingTexts, airdrops, visualEffects, itemDrops, activeItems, gameTime, marketCap, kills, orbitAngle, activeLaser, bossState, bossHasBeenDefeated, camera, lastSkillUsed, specialEventMessage, isHardMode, bonkMode, airdropBonkEvent, isPaperHandsUpgraded, upcomingRedCandleAttack } = JSON.parse(JSON.stringify(prev));
             let currentStatus: GameStatus = prev.status;
             
             gameTime += delta;
@@ -251,6 +266,18 @@ const App: React.FC = () => {
                 lastSkillUsed.life -= delta;
                 if (lastSkillUsed.life <= 0) {
                     lastSkillUsed = null;
+                }
+            }
+            if (specialEventMessage) {
+                specialEventMessage.life -= delta;
+                if (specialEventMessage.life <= 0) {
+                    specialEventMessage = null;
+                }
+            }
+            if (bonkMode) {
+                bonkMode.timer -= delta;
+                if (bonkMode.timer <= 0) {
+                    bonkMode = null;
                 }
             }
              // --- CAMERA SHAKE ---
@@ -262,15 +289,12 @@ const App: React.FC = () => {
             
             const zoom = isTouch ? 0.75 : 1.0;
 
-            const botData = WEAPON_DATA[WeaponType.TradingBot];
-            orbitAngle = (orbitAngle + (botData.speed * delta)) % (2 * Math.PI);
-
             // --- FLOATING TEXT ---
             floatingTexts = floatingTexts
                 .map((ft: FloatingText) => ({ ...ft, life: ft.life - delta }))
                 .filter((ft: FloatingText) => ft.life > 0);
 
-            const addFloatingText = (text: string, x: number, y: number, color: string = 'white') => {
+            const addFloatingText = (text: string, x: number, y: number, color: string = 'white', life: number = 1.0) => {
                 if (!settings.floatingText) return;
                 floatingTexts.push({
                     id: `ft_${Date.now()}_${Math.random()}`,
@@ -278,7 +302,7 @@ const App: React.FC = () => {
                     x,
                     y,
                     color,
-                    life: 1.0,
+                    life,
                 });
             };
             
@@ -327,12 +351,24 @@ const App: React.FC = () => {
                  marketCap += MC_PER_SECOND * delta;
             }
 
+            // --- HARD MODE & ENEMY UPGRADE TRIGGERS ---
+            if (!isHardMode && marketCap >= 100000) {
+                isHardMode = true;
+                specialEventMessage = { id: `hardmode_${Date.now()}`, text: 'MARKET PANIC!', life: 4.0 };
+                addFloatingText('FUD has mutated!', player.x, player.y - 40, '#ef4444', 3.0);
+            }
+
+            if (!isPaperHandsUpgraded && marketCap >= 120000) {
+                isPaperHandsUpgraded = true;
+                addFloatingText('Paper Hands are getting stronger!', player.x, player.y - 60, '#f87171', 3.0);
+            }
+
             if (marketCap >= BOSS_SPAWN_MC && prev.status === GameStatus.Playing && !prev.bossHasBeenDefeated) {
                 currentStatus = GameStatus.BossFight;
                 enemies = []; // Clear existing enemies
                 const bossData = ENEMY_DATA[EnemyType.MigratingBoss];
                 enemies.push({ id: 'boss_cex', type: EnemyType.MigratingBoss, ...bossData, x: player.x, y: player.y - 800, lastHitBy: {} });
-                bossState = { shockwaveTimer: 8, spawnTimer: 5, marketCapVolatilityTimer: MC_VOLATILITY_INTERVAL, rangedAttackTimer: BOSS_RANGED_ATTACK_COOLDOWN };
+                bossState = { shockwaveTimer: 8, spawnTimer: 5, marketCapVolatilityTimer: MC_VOLATILITY_INTERVAL, rangedAttackTimer: BOSS_RANGED_ATTACK_COOLDOWN, redCandleAttackTimer: BOSS_RED_CANDLE_COOLDOWN / 2 };
                 addFloatingText('WARNING: MIGRATING BOSS INBOUND', player.x, player.y - 100, '#ef4444');
                  if (settings.screenShake) camera.shake = { duration: 2.0, intensity: 10 };
             }
@@ -342,6 +378,7 @@ const App: React.FC = () => {
                 bossState.spawnTimer -= delta;
                 bossState.marketCapVolatilityTimer -= delta;
                 bossState.rangedAttackTimer -= delta;
+                bossState.redCandleAttackTimer -= delta;
                 const boss = enemies.find(e => e.isBoss);
 
                 if (bossState.marketCapVolatilityTimer <= 0) {
@@ -369,6 +406,32 @@ const App: React.FC = () => {
                         dx: dx / dist,
                         dy: dy / dist,
                     });
+                }
+
+                if (boss && bossState.redCandleAttackTimer <= 0) {
+                    bossState.redCandleAttackTimer = BOSS_RED_CANDLE_COOLDOWN;
+                    const isVertical = Math.random() < 0.5;
+                    const position = isVertical ? player.x : player.y;
+
+                    const warningId = `red_candle_warn_${Date.now()}`;
+                    visualEffects.push({
+                        id: warningId,
+                        type: 'red_candle_warning',
+                        x: isVertical ? position : 0,
+                        y: isVertical ? 0 : position,
+                        isVertical: isVertical,
+                        radius: BOSS_RED_CANDLE_WIDTH,
+                        life: BOSS_RED_CANDLE_WARNING_DURATION,
+                        totalLife: BOSS_RED_CANDLE_WARNING_DURATION,
+                        color: '#ef4444'
+                    });
+                    
+                    upcomingRedCandleAttack = {
+                        id: `red_candle_atk_${Date.now()}`,
+                        isVertical: isVertical,
+                        position: position,
+                        triggerTime: gameTime + BOSS_RED_CANDLE_WARNING_DURATION
+                    };
                 }
 
                 if (boss && bossState.shockwaveTimer <= 0) {
@@ -429,9 +492,83 @@ const App: React.FC = () => {
                         case 2: x = viewRect.left + Math.random() * window.innerWidth; y = viewRect.bottom + spawnOffset; break;
                         default: x = viewRect.left - spawnOffset; y = viewRect.top + Math.random() * window.innerHeight; break;
                     }
+                    
                     const enemyData = ENEMY_DATA[enemyTypeToSpawn];
-                    enemies.push({ id: `enemy_${Date.now()}_${Math.random()}`, type: enemyTypeToSpawn, ...enemyData, x, y, lastHitBy: {} });
+                    let finalEnemyData = { ...enemyData };
+                    let enemyLevel: number | undefined = undefined;
+            
+                    if (enemyTypeToSpawn === EnemyType.FUD && isHardMode) {
+                        const level2Data = enemyData.levelData?.[2];
+                        if (level2Data) {
+                            finalEnemyData = { ...finalEnemyData, ...level2Data };
+                            enemyLevel = 2;
+                        }
+                    }
+                    
+                    if (enemyTypeToSpawn === EnemyType.PaperHands && isPaperHandsUpgraded) {
+                        const level2Data = enemyData.levelData?.[2];
+                        if (level2Data) {
+                            finalEnemyData = { ...finalEnemyData, ...level2Data };
+                            enemyLevel = 2;
+                        }
+                    }
+
+                    enemies.push({ 
+                        id: `enemy_${Date.now()}_${Math.random()}`, 
+                        type: enemyTypeToSpawn, 
+                        ...finalEnemyData, 
+                        x, y, 
+                        lastHitBy: {},
+                        level: enemyLevel
+                    });
                 }
+            }
+
+            // --- AIRDROP BONK EVENT ---
+            if (airdropBonkEvent) {
+                airdropBonkEvent.timer -= delta;
+                airdropBonkEvent.dropCooldown -= delta;
+
+                if (airdropBonkEvent.dropCooldown <= 0 && airdropBonkEvent.dropsLeft > 0) {
+                    // Spawn a random airdrop around the player
+                    const spawnRadius = (window.innerWidth / zoom) / 2;
+                    const angle = Math.random() * 2 * Math.PI;
+                    const dist = Math.random() * spawnRadius;
+                    const x = player.x + Math.cos(angle) * dist;
+                    const y = player.y + Math.sin(angle) * dist;
+
+                    const weaponData = WEAPON_DATA[WeaponType.Airdrop];
+                    const effectiveLevel = weaponData.maxLevel + 1; // Bonked level
+                    const damage = weaponData.damage + (effectiveLevel - 1) * 10;
+                    const radius = (weaponData.radius || 120) + (effectiveLevel - 1) * 5;
+                    const airdropId = `airdrop_bonk_${Date.now()}_${Math.random()}`;
+                    airdrops.push({ id: airdropId, x, y, startY: y - 500, fallTimer: 2.0, totalFallTime: 2.0, radius, damage });
+                    visualEffects.push({ id: `vfx_target_${airdropId}`, x, y, type: 'airdrop_target', radius: radius, life: 2.0, totalLife: 2.0, color: '#FF8C00' });
+                    
+                    airdropBonkEvent.dropsLeft--;
+                    airdropBonkEvent.dropCooldown = 0.5; // 10 drops in 5s
+                }
+
+                if (airdropBonkEvent.timer <= 0 || airdropBonkEvent.dropsLeft <= 0) {
+                    airdropBonkEvent = null; // Event ends
+                }
+            }
+
+            // --- RED CANDLE ATTACK ---
+            if (upcomingRedCandleAttack && gameTime >= upcomingRedCandleAttack.triggerTime) {
+                visualEffects.push({
+                    id: upcomingRedCandleAttack.id,
+                    type: 'red_candle_attack',
+                    x: upcomingRedCandleAttack.isVertical ? upcomingRedCandleAttack.position : 0,
+                    y: upcomingRedCandleAttack.isVertical ? 0 : upcomingRedCandleAttack.position,
+                    isVertical: upcomingRedCandleAttack.isVertical,
+                    radius: BOSS_RED_CANDLE_WIDTH,
+                    life: BOSS_RED_CANDLE_ATTACK_DURATION,
+                    totalLife: BOSS_RED_CANDLE_ATTACK_DURATION,
+                    color: '#ff1111'
+                });
+                if (settings.screenShake) camera.shake = { duration: 0.5, intensity: 10 };
+                upcomingRedCandleAttack = null;
             }
 
 
@@ -440,10 +577,19 @@ const App: React.FC = () => {
             player.weapons.forEach((weapon: Weapon) => {
                 weapon.timer += delta;
                 const weaponData = WEAPON_DATA[weapon.type];
+                const isBonked = bonkMode !== null;
+                let effectiveLevel = weapon.level;
+                if (isBonked && weapon.type !== WeaponType.TradingBot) { // Trading bot has special bonk logic
+                    effectiveLevel = weaponData.maxLevel + 1;
+                }
 
-                if(weapon.type === WeaponType.LaserEyes) {
-                    if (weapon.timer > weaponData.cooldown) weapon.timer = 0;
-                    if (weapon.timer < (weaponData.duration || 2) && enemies.length > 0) {
+                if (weapon.type === WeaponType.LaserEyes) {
+                    if (!isBonked) { // Only apply cooldown logic if not in BONK mode
+                        if (weapon.timer > weaponData.cooldown) weapon.timer = 0;
+                    }
+
+                    // Fire if BONK mode is active OR if within the normal duration
+                    if ((isBonked || weapon.timer < (weaponData.duration || 2)) && enemies.length > 0) {
                         let nearestEnemy: Enemy | null = null;
                         let minDistance = Infinity;
                         enemies.forEach((enemy: Enemy) => {
@@ -454,14 +600,16 @@ const App: React.FC = () => {
                         });
 
                         if (nearestEnemy) {
-                            activeLaser = { targetId: nearestEnemy.id, width: weaponData.width + (weapon.level - 1) * 5, damage: weaponData.damage + (weapon.level - 1) * 5, level: weapon.level };
+                            const laserWidth = weaponData.width + (effectiveLevel - 1) * 5;
+                            const laserDamage = weaponData.damage + (effectiveLevel - 1) * 5;
+                            activeLaser = { targetId: nearestEnemy.id, width: laserWidth, damage: laserDamage, level: effectiveLevel };
                         }
                     }
-                } else if (weaponData.cooldown > 0 && weapon.timer >= weaponData.cooldown / (weapon.level * 0.75 + 0.25)) {
+                } else if (weaponData.cooldown > 0 && weapon.timer >= weaponData.cooldown / (effectiveLevel * 0.75 + 0.25)) {
                      weapon.timer = 0;
                      if (weapon.type === WeaponType.ShillTweet && enemies.length > 0) {
                         const shillTweetData = WEAPON_DATA[WeaponType.ShillTweet];
-                        const range = (shillTweetData.radius || 300) + (weapon.level - 1) * 25;
+                        const range = (shillTweetData.radius || 300) + (effectiveLevel - 1) * 25;
                         let nearestEnemy: Enemy | null = null;
                         let minDistance = Infinity;
                         enemies.forEach((enemy: Enemy) => {
@@ -474,13 +622,22 @@ const App: React.FC = () => {
                             projectiles.push({ id: `proj_${Date.now()}_${Math.random()}`, x: player.x, y: player.y, targetId: nearestEnemy.id, owner: 'player', ...WEAPON_DATA[WeaponType.ShillTweet] });
                         }
                     } else if (weapon.type === WeaponType.Airdrop && enemies.length > 0) {
-                         const targetEnemy = enemies[Math.floor(Math.random() * enemies.length)];
-                         const level = weapon.level;
-                         const damage = weaponData.damage + (level - 1) * 10;
-                         const radius = (weaponData.radius || 120) + (level - 1) * 5;
-                         const airdropId = `airdrop_${Date.now()}`;
-                         airdrops.push({ id: airdropId, x: targetEnemy.x, y: targetEnemy.y, startY: targetEnemy.y - 500, fallTimer: 2.0, totalFallTime: 2.0, radius, damage });
-                         visualEffects.push({ id: `vfx_target_${airdropId}`, x: targetEnemy.x, y: targetEnemy.y, type: 'airdrop_target', radius: radius, life: 2.0, totalLife: 2.0, color: '#FF8C00' });
+                        if (isBonked) {
+                            // Trigger the BONK mode special ability
+                            if (!airdropBonkEvent) { // Only trigger if not already active
+                                airdropBonkEvent = { timer: 5, dropsLeft: 10, dropCooldown: 0 };
+                                addFloatingText('AIRDROP BARRAGE!', player.x, player.y - 40, '#FF8C00', 3.0);
+                                if (settings.screenShake) camera.shake = { duration: 0.5, intensity: 10 };
+                            }
+                        } else {
+                            // Normal airdrop logic
+                            const targetEnemy = enemies[Math.floor(Math.random() * enemies.length)];
+                            const damage = weaponData.damage + (effectiveLevel - 1) * 10;
+                            const radius = (weaponData.radius || 120) + (effectiveLevel - 1) * 5;
+                            const airdropId = `airdrop_${Date.now()}`;
+                            airdrops.push({ id: airdropId, x: targetEnemy.x, y: targetEnemy.y, startY: targetEnemy.y - 500, fallTimer: 2.0, totalFallTime: 2.0, radius, damage });
+                            visualEffects.push({ id: `vfx_target_${airdropId}`, x: targetEnemy.x, y: targetEnemy.y, type: 'airdrop_target', radius: radius, life: 2.0, totalLife: 2.0, color: '#FF8C00' });
+                        }
                     }
                 }
             });
@@ -506,10 +663,54 @@ const App: React.FC = () => {
                         }
                     });
                     visualEffects.push({ id: `vfx_${ad.id}`, x: ad.x, y: ad.y, type: 'explosion', radius: ad.radius, life: 0.5, totalLife: 0.5, color: '#FF8C00' });
+                    
+                    // All airdrops have a 10% chance to drop a candle
+                    if (Math.random() < 0.1) {
+                        itemDrops.push({
+                            id: `item_airdrop_candle_${ad.id}`,
+                            x: ad.x,
+                            y: ad.y,
+                            type: ItemType.Candle,
+                        });
+                    }
+
                     if (settings.screenShake) camera.shake = { duration: 0.4, intensity: 8 };
                     return false;
                 }
                 return true;
+            });
+
+            visualEffects.forEach(vfx => {
+                if(vfx.type === 'shockwave') {
+                    const currentRadius = vfx.radius * (1 - (vfx.life / vfx.totalLife));
+                    const shockwaveThickness = 30; // how wide the damaging ring is
+                    const distToPlayer = Math.sqrt(Math.pow(player.x - vfx.x, 2) + Math.pow(player.y - vfx.y, 2));
+                    if(Math.abs(distToPlayer - currentRadius) < (player.width / 2 + shockwaveThickness / 2)) {
+                        player.health -= 20; // Shockwave damage
+                        addFloatingText('20', player.x, player.y, '#ef4444');
+                        if (settings.screenShake) camera.shake = { duration: 0.3, intensity: 6 };
+                    }
+                }
+                if (vfx.type === 'red_candle_attack') {
+                    const candleWidth = vfx.radius;
+                    let isHit = false;
+                    if (vfx.isVertical) {
+                        if (Math.abs(player.x - vfx.x) < (player.width / 2 + candleWidth / 2)) {
+                            isHit = true;
+                        }
+                    } else { // Horizontal
+                        if (Math.abs(player.y - vfx.y) < (player.height / 2 + candleWidth / 2)) {
+                            isHit = true;
+                        }
+                    }
+                    if (isHit) {
+                        const damageThisTick = BOSS_RED_CANDLE_DAMAGE_PER_SEC * delta;
+                        player.health -= damageThisTick;
+                        if (Math.random() < 10 * delta) { // High chance of seeing damage numbers
+                            addFloatingText(Math.ceil(damageThisTick * 5).toString(), player.x, player.y - 20, '#ef4444');
+                        }
+                    }
+                }
             });
             visualEffects = visualEffects.map((vfx: VisualEffect) => ({ ...vfx, life: vfx.life - delta })).filter((vfx: VisualEffect) => vfx.life > 0);
 
@@ -520,18 +721,22 @@ const App: React.FC = () => {
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
                 if (dist < player.width / 2 + 15) {
-                    // Item collected, activate immediately
+                    if (drop.type === ItemType.BONKAura) {
+                        const bonkData = ITEM_DATA[ItemType.BONKAura];
+                        const duration = bonkData.duration || 5;
+                        bonkMode = { timer: duration, duration: duration };
+                        lastSkillUsed = { id: `${Date.now()}`, name: bonkData.name, life: 2.0 };
+                        addFloatingText('BONK!!!', player.x, player.y - 30, '#ef4444', 2.0);
+                        if (settings.screenShake) camera.shake = { duration: 0.5, intensity: 12 };
+                    }
                     if (drop.type === ItemType.Candle) {
-                        // If the drop has a specified variant (like the starting one), use it.
-                        // Otherwise, pick a random variant for drops from enemies.
                         const chosenVariant: CandleVariant = drop.variant || (() => {
                             const random = Math.random();
-                            return (random < 0.80) ? 'West' : (random < 0.90) ? '奶牛candle' : 'Gake';
+                            return (random < 0.65) ? 'West' : (random < 0.90) ? '奶牛candle' : 'Gake';
                         })();
                         
                         const candleData = ITEM_DATA[ItemType.Candle].variants![chosenVariant];
                         
-                        // Activation logic moved here
                         const rotations = candleData.rotations || 1;
                         
                         lastSkillUsed = { id: `${Date.now()}`, name: candleData.name, life: 2.0 };
@@ -567,6 +772,10 @@ const App: React.FC = () => {
                                 healText = `+${healAmount} U`;
                                 break;
                             case '奶牛candle':
+                                enemies.forEach((e: Enemy) => {
+                                    e.stun = { duration: 0.5 };
+                                    addFloatingText('❓', e.x, e.y - e.height, '#FBBF24', 0.5);
+                                });
                                 break;
                         }
                         
@@ -588,11 +797,35 @@ const App: React.FC = () => {
                 if (item.type === ItemType.Candle) { const candleItem = item as ActiveCandle; candleItem.angle = (candleItem.angle + candleItem.rotationSpeed * delta) % (2 * Math.PI); }
             });
 
+            const hodlerAreaWeapon = player.weapons.find(w => w.type === WeaponType.HODLerArea);
+
             // --- UPDATE ENEMIES ---
             enemies.forEach((e: Enemy) => {
-                if (e.knockback && e.knockback.duration > 0) { e.x += e.knockback.dx * e.knockback.speed * delta; e.y += e.knockback.dy * e.knockback.speed * delta; e.knockback.duration -= delta; } else {
+                let currentSpeed = e.speed;
+                e.isSlowed = false; // Reset slow status each frame
+
+                // HODLer Area Slow Effect
+                if (hodlerAreaWeapon) {
+                    let effectiveLevel = hodlerAreaWeapon.level;
+                    if (bonkMode) { effectiveLevel = WEAPON_DATA[hodlerAreaWeapon.type].maxLevel + 1; }
+                    const auraData = WEAPON_DATA[WeaponType.HODLerArea];
+                    const radius = (auraData.radius || 50) + (effectiveLevel - 1) * 15;
+                    const distToPlayer = Math.sqrt(Math.pow(player.x - e.x, 2) + Math.pow(player.y - e.y, 2));
+
+                    if (distToPlayer < radius) {
+                        currentSpeed *= 0.90; // Apply 10% slow
+                        e.isSlowed = true;
+                    }
+                }
+
+                if (e.stun && e.stun.duration > 0) {
+                    e.stun.duration -= delta;
+                    if (e.stun.duration <= 0) e.stun = undefined;
+                } else if (e.knockback && e.knockback.duration > 0) {
+                     e.x += e.knockback.dx * e.knockback.speed * delta; e.y += e.knockback.dy * e.knockback.speed * delta; e.knockback.duration -= delta; 
+                } else {
                     const dx = player.x - e.x; const dy = player.y - e.y; const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist > 1) { e.x += (dx / dist) * e.speed * delta; e.y += (dy / dist) * e.speed * delta; }
+                    if (dist > 1) { e.x += (dx / dist) * currentSpeed * delta; e.y += (dy / dist) * currentSpeed * delta; }
                 }
             });
 
@@ -610,7 +843,9 @@ const App: React.FC = () => {
                         const dx = e.x - p.x; const dy = e.y - p.y; const dist = Math.sqrt(dx * dx + dy * dy);
                         if (dist < e.width / 2 + p.width / 2) {
                             const shillTweetWeapon = player.weapons.find(w => w.type === WeaponType.ShillTweet);
-                            const damage = WEAPON_DATA[WeaponType.ShillTweet].damage + ((shillTweetWeapon?.level || 1) - 1) * 8;
+                            let effectiveLevel = shillTweetWeapon?.level || 1;
+                            if (bonkMode) { effectiveLevel = WEAPON_DATA[WeaponType.ShillTweet].maxLevel + 1; }
+                            const damage = WEAPON_DATA[WeaponType.ShillTweet].damage + (effectiveLevel - 1) * 8;
                             e.health -= damage; addFloatingText(damage.toString(), e.x, e.y, '#38bdf8');
                             hit = true;
                         }
@@ -661,39 +896,37 @@ const App: React.FC = () => {
             });
             projectiles = newProjectiles;
 
-            const hodlerAreaWeapon = player.weapons.find(w => w.type === WeaponType.HODLerArea);
             const tradingBotWeapon = player.weapons.find(w => w.type === WeaponType.TradingBot);
             
-            visualEffects.forEach(vfx => {
-                if(vfx.type === 'shockwave') {
-                    const currentRadius = vfx.radius * (1 - (vfx.life / vfx.totalLife));
-                    const shockwaveThickness = 30; // how wide the damaging ring is
-                    const distToPlayer = Math.sqrt(Math.pow(player.x - vfx.x, 2) + Math.pow(player.y - vfx.y, 2));
-                    if(Math.abs(distToPlayer - currentRadius) < (player.width / 2 + shockwaveThickness / 2)) {
-                        player.health -= 20; // Shockwave damage
-                        addFloatingText('20', player.x, player.y, '#ef4444');
-                        if (settings.screenShake) camera.shake = { duration: 0.3, intensity: 6 };
-                    }
-                }
-            });
-
+            // --- Update Orbit Angle for Trading Bots ---
+            if (tradingBotWeapon) {
+                const botData = WEAPON_DATA[WeaponType.TradingBot];
+                const rotationSpeed = bonkMode ? botData.speed * 2 : botData.speed;
+                orbitAngle = (orbitAngle + rotationSpeed * delta) % (2 * Math.PI);
+            }
+            
             enemies.forEach(e => {
                 // HODLer Area Damage
                 if (hodlerAreaWeapon) {
-                    const auraData = WEAPON_DATA[WeaponType.HODLerArea]; const radius = (auraData.radius || 50) + (hodlerAreaWeapon.level - 1) * 15;
+                    let effectiveLevel = hodlerAreaWeapon.level;
+                    if (bonkMode) { effectiveLevel = WEAPON_DATA[hodlerAreaWeapon.type].maxLevel + 1; }
+                    const auraData = WEAPON_DATA[WeaponType.HODLerArea]; const radius = (auraData.radius || 50) + (effectiveLevel - 1) * 15;
                     const dx = e.x - player.x; const dy = e.y - player.y; const dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist < radius) {
-                        const damageThisTick = auraData.damage * hodlerAreaWeapon.level * delta; e.health -= damageThisTick;
-                        if (Math.random() < 3 * delta) addFloatingText(Math.ceil((auraData.damage * hodlerAreaWeapon.level) / 3).toString(), e.x + (Math.random()-0.5)*10, e.y, '#FFD700');
+                        const damageThisTick = auraData.damage * effectiveLevel * delta; e.health -= damageThisTick;
+                        if (Math.random() < 3 * delta) addFloatingText(Math.ceil((auraData.damage * effectiveLevel) / 3).toString(), e.x + (Math.random()-0.5)*10, e.y, '#FFD700');
                     }
                 }
                 
                 // Trading Bot Damage
                 if (tradingBotWeapon) {
                     const botData = WEAPON_DATA[WeaponType.TradingBot]; const lastHitTime = e.lastHitBy[WeaponType.TradingBot] || 0;
+                    const isBonked = bonkMode !== null;
+                    const numBots = isBonked ? 10 : tradingBotWeapon.level;
+
                     if (gameTime > lastHitTime + (botData.hitCooldown || 0.5)) {
-                        for (let i = 0; i < tradingBotWeapon.level; i++) {
-                            const angle = orbitAngle + (i * 2 * Math.PI / tradingBotWeapon.level);
+                        for (let i = 0; i < numBots; i++) {
+                            const angle = orbitAngle + (i * 2 * Math.PI / numBots);
                             const botX = player.x + (botData.radius || 80) * Math.cos(angle); const botY = player.y + (botData.radius || 80) * Math.sin(angle);
                             const dx = e.x - botX; const dy = e.y - botY; const dist = Math.sqrt(dx * dx + dy * dy);
                             if (dist < e.width / 2 + botData.width / 2) {
@@ -746,8 +979,16 @@ const App: React.FC = () => {
                         bossHasBeenDefeated = true;
                         addFloatingText('MARKET STABILIZED', player.x, player.y - 40, '#34D399');
                         addFloatingText('MC BREAKTHROUGH!', player.x, player.y, '#FBBF24');
+                        specialEventMessage = { id: `migrated_${Date.now()}`, text: 'Migrated', life: 4.0 };
+                        itemDrops.push({
+                            id: `item_bonk_boss_drop_${e.id}`,
+                            x: e.x,
+                            y: e.y,
+                            type: ItemType.BONKAura,
+                        });
                     }
-                    newGems.push({ id: `gem_${e.id}`, x: e.x, y: e.y, value: e.xpValue }); kills++;
+                    newGems.push({ id: `gem_${e.id}`, x: e.x, y: e.y, value: e.xpValue, isLarge: e.type === EnemyType.RivalWhale }); 
+                    kills++;
                     if (Math.random() < ITEM_DROP_CHANCE) itemDrops.push({ id: `item_${e.id}`, x: e.x, y: e.y, type: ItemType.Candle });
                 } else {
                     const dx = player.x - e.x; const dy = player.y - e.y; const dist = Math.sqrt(dx * dx + dy * dy);
@@ -803,6 +1044,12 @@ const App: React.FC = () => {
                 bossHasBeenDefeated,
                 camera,
                 lastSkillUsed,
+                specialEventMessage,
+                isHardMode,
+                bonkMode,
+                airdropBonkEvent,
+                isPaperHandsUpgraded,
+                upcomingRedCandleAttack,
             };
         });
     }, [handleLevelUp, isTouch, settings]);
@@ -868,6 +1115,9 @@ const App: React.FC = () => {
                             status={gameState.status} 
                             isTouch={isTouch}
                             lastSkillUsed={gameState.lastSkillUsed}
+                            specialEventMessage={gameState.specialEventMessage}
+                            isBonked={gameState.bonkMode !== null}
+                            bonkMode={gameState.bonkMode}
                         />
                         <GameScreen gameState={gameState} isTouch={isTouch} />
                        

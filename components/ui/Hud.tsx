@@ -9,6 +9,9 @@ interface HudProps {
     status: GameStatus;
     isTouch: boolean;
     lastSkillUsed: { id: string, name: string; life: number } | null;
+    specialEventMessage: { id: string, text: string; life: number } | null;
+    isBonked: boolean;
+    bonkMode: { timer: number; duration: number; } | null;
 }
 
 const WEAPON_ICONS: Record<WeaponType, string> = {
@@ -19,7 +22,7 @@ const WEAPON_ICONS: Record<WeaponType, string> = {
     [WeaponType.Airdrop]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNNjAsODBIODVWMzBINjBWNDVINDVWODBIOSIgc3Ryb2tlPSIjODc2MjQxIiBmaWxsPSIjQjU4NDU5IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNMjUsMzAgaDIwIHYtMjAgYTEwIDEwIDAgMSAxIDIwIDAgdjIwIGgyMCIgc3Ryb2tlPSIjRUZFRkZGIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==",
 };
 
-export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, lastSkillUsed }) => {
+export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, lastSkillUsed, specialEventMessage, isBonked, bonkMode }) => {
     const { health, maxHealth, xp, xpToNextLevel, level, weapons } = player;
     const healthPercentage = (health / maxHealth) * 100;
     const xpPercentage = (xp / xpToNextLevel) * 100;
@@ -68,12 +71,27 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
                             .map(weapon => (
                                 <div key={weapon.type} className="flex items-center gap-1.5 bg-gray-900/50 p-1 rounded-md border border-gray-600 backdrop-blur-sm">
                                     <img src={WEAPON_ICONS[weapon.type]} alt={weapon.type} className="w-6 h-6" style={{ imageRendering: 'pixelated' }} />
-                                    <span className="text-sm font-bold text-yellow-300 pr-1">L{weapon.level}</span>
+                                    <span className={`text-sm font-bold pr-1 ${isBonked ? 'text-red-400 animate-pulse' : 'text-yellow-300'}`}>
+                                        {isBonked ? 'BONK' : `L${weapon.level}`}
+                                    </span>
                                 </div>
                         ))}
                     </div>
+
+                    {/* BONK Mode Timer Bar */}
+                    {bonkMode && (
+                        <div className="mt-2 w-full max-w-[240px] mx-auto">
+                            <div className="text-center text-sm font-bold text-red-400 animate-pulse">BONK MODE</div>
+                            <div className="w-full bg-gray-700 rounded-full h-2.5 border border-gray-600">
+                                <div
+                                    className="bg-red-500 h-full rounded-full"
+                                    style={{ width: `${(bonkMode.timer / bonkMode.duration) * 100}%` }}
+                                ></div>
+                            </div>
+                        </div>
+                    )}
                     
-                    {/* Activated Skill Name */}
+                    {/* Activated Skill Name & Special Events */}
                     <div className="relative h-20 pointer-events-none -mb-4">
                         {lastSkillUsed && (
                             <div 
@@ -82,6 +100,16 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
                             >
                                 <h3 className="font-cinzel text-5xl text-green-400 text-shadow">
                                     {lastSkillUsed.name}
+                                </h3>
+                            </div>
+                        )}
+                        {specialEventMessage && (
+                            <div 
+                                key={specialEventMessage.id} // Re-triggers animation on new use
+                                className="absolute inset-0 flex items-center justify-center animate-skill-pop"
+                            >
+                                <h3 className="font-cinzel text-6xl text-yellow-300 text-shadow">
+                                    {specialEventMessage.text}
                                 </h3>
                             </div>
                         )}

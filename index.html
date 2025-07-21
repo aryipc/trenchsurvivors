@@ -68,6 +68,47 @@
       .animate-skill-pop {
           animation: skill-name-pop 2s ease-out forwards;
       }
+      
+      @keyframes rainbow-laser {
+        0% { filter: hue-rotate(0deg); }
+        100% { filter: hue-rotate(360deg); }
+      }
+      .animate-rainbow-laser {
+        animation: rainbow-laser 1s linear infinite;
+      }
+
+      @keyframes bonk-crack {
+        0%, 40% {
+          transform: scale(0.95);
+          opacity: 0;
+        }
+        50% {
+          transform: scale(1.05);
+          opacity: 1;
+          filter: drop-shadow(0 0 20px #ef4444);
+        }
+        60%, 100% {
+          transform: scale(1.1);
+          opacity: 0;
+        }
+      }
+      .animate-bonk-crack {
+        animation: bonk-crack 1.5s ease-in-out infinite;
+      }
+
+      @keyframes pulse-slow-aura {
+        0%, 100% {
+          transform: scale(0.98);
+          opacity: 0.2;
+        }
+        70% {
+          transform: scale(1.03);
+          opacity: 0.4;
+        }
+      }
+      .animate-pulse-slow {
+        animation: pulse-slow-aura 3s ease-in-out infinite;
+      }
     </style>
   <script type="importmap">
 {

@@ -1,4 +1,6 @@
 
+
+
 import { WeaponType, UpgradeOption } from '../types';
 
 // Static, hardcoded descriptions to replace the Gemini API calls.
@@ -46,7 +48,7 @@ export const STATIC_DESCRIPTIONS: Record<WeaponType, string[]> = {
         'The airdrop now leaves a temporary slowing field on the ground.', // Lvl 4
         'Greatly increased damage and blast radius. A true market-mover.', // Lvl 5
         'The drop now splits into three smaller explosions. Carpet bomb the FUD.', // Lvl 6
-        'Drastically reduced cooldown. It\'s raining gains, hallelujah!', // Lvl 7
+        'Drastic increase in airdrop frequency. It\'s raining gains, hallelujah!', // Lvl 7
         'The ultimate airdrop. A massive explosion that also stuns all enemies hit.', // Lvl 8
     ],
 };

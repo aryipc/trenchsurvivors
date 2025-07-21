@@ -3,6 +3,7 @@
 
 
 
+
 export enum GameStatus {
     NotStarted,
     Playing,
@@ -30,6 +31,7 @@ export enum EnemyType {
 
 export enum ItemType {
     Candle = 'Candle',
+    BONKAura = 'BONK AURA',
 }
 
 export type CandleVariant = 'Gake' | 'West' | '奶牛candle';
@@ -70,12 +72,17 @@ export interface Enemy extends GameObject {
     xpValue: number;
     isBoss?: boolean;
     lastHitBy: { [weaponType: string]: number };
+    level?: number;
     knockback?: {
         dx: number;
         dy: number;
         duration: number;
         speed: number;
     };
+    stun?: {
+        duration: number;
+    };
+    isSlowed?: boolean;
 }
 
 export interface Projectile extends GameObject {
@@ -93,6 +100,7 @@ export interface ExperienceGem {
     x: number;
     y: number;
     value: number;
+    isLarge?: boolean;
 }
 
 export interface FloatingText {
@@ -119,11 +127,12 @@ export interface VisualEffect {
     id: string;
     x: number;
     y: number;
-    type: 'explosion' | 'airdrop_target' | 'shockwave';
+    type: 'explosion' | 'airdrop_target' | 'shockwave' | 'red_candle_warning' | 'red_candle_attack';
     radius: number;
     life: number;
     totalLife: number;
     color: string;
+    isVertical?: boolean;
 }
 
 export interface LaserBeam {
@@ -174,6 +183,13 @@ export interface Settings {
     floatingText: boolean;
 }
 
+export interface RedCandleAttackInfo {
+    id: string;
+    isVertical: boolean;
+    position: number;
+    triggerTime: number;
+}
+
 export interface GameState {
     status: GameStatus;
     player: Player;
@@ -197,11 +213,18 @@ export interface GameState {
         spawnTimer: number;
         marketCapVolatilityTimer: number;
         rangedAttackTimer: number;
+        redCandleAttackTimer: number;
     } | null;
     bossHasBeenDefeated: boolean;
     currentUser: CurrentUser | null;
     isNewHighScore: boolean;
     lastSkillUsed: { id: string, name: string; life: number } | null;
+    specialEventMessage: { id: string, text: string; life: number } | null;
+    isHardMode: boolean;
+    bonkMode: { timer: number; duration: number; } | null;
+    airdropBonkEvent: { timer: number; dropsLeft: number; dropCooldown: number; } | null;
+    isPaperHandsUpgraded: boolean;
+    upcomingRedCandleAttack: RedCandleAttackInfo | null;
 }
 
 export interface UpgradeOption {
@@ -219,6 +242,20 @@ export interface ScoreEntry {
     date: string;
 }
 
+export interface EnemyData {
+    name: string;
+    health: number;
+    speed: number;
+    damage: number;
+    width: number;
+    height: number;
+    xpValue: number;
+    isBoss?: boolean;
+    levelData?: {
+        [level: number]: Partial<Omit<EnemyData, 'name' | 'isBoss' | 'levelData'>>;
+    };
+}
+
 export interface WeaponData {
     name: string;
     damage: number;
@@ -229,8 +266,17 @@ export interface WeaponData {
     radius?: number;
     maxLevel: number;
     hitCooldown?: number;
-    duration?: number; // For channeled/active weapons like Laser Eyes
+    duration?: number; // For ahanneled/active weapons like Laser Eyes
     blockChance?: number; // Kept for type safety, but unused
+}
+
+export interface ItemData {
+    name: string;
+    svg: string;
+    variants?: Record<string, ItemVariantData>;
+    damage?: number;
+    radius?: number;
+    duration?: number;
 }
 
 export interface ItemVariantData {

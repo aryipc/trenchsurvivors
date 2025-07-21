@@ -1,14 +1,16 @@
 
+
 import React from 'react';
 import { Player } from '../types';
-import { SHIBA_HELMET_ICON } from '../constants';
+import { SHIBA_HELMET_ICON, GROUND_CRACK_ICON } from '../constants';
 
 interface PlayerProps {
     player: Player;
     auraRadius: number;
+    isBonked: boolean;
 }
 
-const PlayerComponent: React.FC<PlayerProps> = ({ player, auraRadius }) => {
+const PlayerComponent: React.FC<PlayerProps> = ({ player, auraRadius, isBonked }) => {
     const style: React.CSSProperties = {
         left: player.x - player.width / 2,
         top: player.y - player.height / 2,
@@ -39,10 +41,28 @@ const PlayerComponent: React.FC<PlayerProps> = ({ player, auraRadius }) => {
     return (
         <>
             {auraRadius > 0 && (
-                <div 
-                    className="absolute bg-yellow-400/20 rounded-full border-2 border-yellow-300 animate-pulse-aura"
-                    style={auraStyle}
-                ></div>
+                <>
+                    {/* Always render the base aura if the weapon is active */}
+                    <div
+                        className="absolute bg-yellow-400/20 rounded-full border-2 border-yellow-300 animate-pulse-aura"
+                        style={auraStyle}
+                    ></div>
+                    {/* Add a shimmering blue ring to signify the slow effect */}
+                    <div
+                        className="absolute rounded-full border-2 border-cyan-300 animate-pulse-slow"
+                        style={{ ...auraStyle, boxShadow: 'inset 0 0 15px 2px rgba(34, 211, 238, 0.3), 0 0 15px 2px rgba(34, 211, 238, 0.3)' }}
+                    ></div>
+                    
+                    {/* Conditionally render the bonk effect on top */}
+                    {isBonked && (
+                         <div
+                            className="absolute animate-bonk-crack"
+                            style={auraStyle}
+                        >
+                            <img src={GROUND_CRACK_ICON} alt="Bonk Effect" className="w-full h-full" />
+                        </div>
+                    )}
+                </>
             )}
             <div className="absolute z-10" style={style}>
                 {/* This outer div creates the circular frame and clips the inner content. */}
