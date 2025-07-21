@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { Player, ItemType, GameStatus, WeaponType } from '../../types';
 import { ITEM_DATA, CROCODILE_ICON } from '../../constants';
 
@@ -8,7 +8,6 @@ interface HudProps {
     kills: number;
     status: GameStatus;
     isTouch: boolean;
-    onUseItem: () => void;
     lastSkillUsed: { id: string, name: string; life: number } | null;
 }
 
@@ -20,7 +19,7 @@ const WEAPON_ICONS: Record<WeaponType, string> = {
     [WeaponType.Airdrop]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNNjAsODBIODVWMzBINjBWNDVINDVWODBIOSIgc3Ryb2tlPSIjODc2MjQxIiBmaWxsPSIjQjU4NDU5IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNMjUsMzAgaDIwIHYtMjAgYTEwIDEwIDAgMSAxIDIwIDAgdjIwIGgyMCIgc3Ryb2tlPSIjRUZFRkZGIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==",
 };
 
-export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, onUseItem, lastSkillUsed }) => {
+export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, lastSkillUsed }) => {
     const { health, maxHealth, xp, xpToNextLevel, level, heldItem, weapons } = player;
     const healthPercentage = (health / maxHealth) * 100;
     const xpPercentage = (xp / xpToNextLevel) * 100;
@@ -28,27 +27,6 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
     const formatMarketCap = (value: number) => {
         return `$${Math.floor(value).toLocaleString()}`;
     };
-
-    const mobileSkillButtonRef = useRef<HTMLButtonElement>(null);
-
-    useEffect(() => {
-        const button = mobileSkillButtonRef.current;
-        if (!button || !isTouch) return;
-
-        // Use a native event listener to bypass React's synthetic event system,
-        // which can be unreliable on mobile when other pointer events are active.
-        const handlePointerDown = (e: PointerEvent) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onUseItem();
-        };
-
-        button.addEventListener('pointerdown', handlePointerDown);
-
-        return () => {
-            button.removeEventListener('pointerdown', handlePointerDown);
-        };
-    }, [isTouch, onUseItem]);
 
     return (
         <>
@@ -132,24 +110,6 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
                         />
                     </div>
                 </div>
-            )}
-
-            {/* Mobile Action Button */}
-            {isTouch && heldItem?.type === ItemType.Candle && heldItem.variant && (
-                 <button
-                    ref={mobileSkillButtonRef}
-                    type="button"
-                    className="absolute bottom-[124px] right-12 z-50 w-24 h-24 bg-gray-800/80 border-4 border-yellow-300 rounded-full shadow-lg flex items-center justify-center active:bg-yellow-400/50 p-0 appearance-none"
-                    aria-label="Use Item"
-                    style={{ touchAction: 'none' }}
-                 >
-                    <img
-                        src={ITEM_DATA[ItemType.Candle].svg}
-                        alt={ITEM_DATA[ItemType.Candle].variants![heldItem.variant].name}
-                        className="h-14 w-auto pointer-events-none"
-                        style={{ filter: 'drop-shadow(0 0 5px #10B981)'}}
-                    />
-                </button>
             )}
         </>
     );

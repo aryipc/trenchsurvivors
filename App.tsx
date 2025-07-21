@@ -1,9 +1,4 @@
 
-
-
-
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import GameScreen from './components/GameScreen';
 import { Hud } from './components/ui/Hud';
@@ -11,6 +6,7 @@ import LevelUpModal from './components/ui/LevelUpModal';
 import GameOverScreen from './components/ui/GameOverScreen';
 import StartScreen from './components/ui/StartScreen';
 import VirtualJoystick from './components/ui/VirtualJoystick';
+import SkillButton from './components/ui/SkillButton';
 import LeaderboardScreen from './components/ui/LeaderboardScreen';
 import { useGameLoop } from './hooks/useGameLoop';
 import { useTouchControls } from './hooks/useTouch';
@@ -848,7 +844,6 @@ const App: React.FC = () => {
                             kills={gameState.kills} 
                             status={gameState.status} 
                             isTouch={isTouch}
-                            onUseItem={handleUseItem}
                             lastSkillUsed={gameState.lastSkillUsed}
                         />
                         <GameScreen gameState={gameState} isTouch={isTouch} />
@@ -881,7 +876,10 @@ const App: React.FC = () => {
         >
             {renderGameContent()}
             {isTouch && (gameState.status === GameStatus.Playing || gameState.status === GameStatus.BossFight) && (
-                <VirtualJoystick onMove={handleJoystickMove} />
+                <>
+                    <VirtualJoystick onMove={handleJoystickMove} />
+                    <SkillButton player={gameState.player} onUseItem={handleUseItem} />
+                </>
             )}
         </div>
     );
