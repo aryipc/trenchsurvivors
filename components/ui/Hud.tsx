@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Player, ItemType, GameStatus, WeaponType } from '../../types';
 import { ITEM_DATA, CROCODILE_ICON } from '../../constants';
@@ -10,8 +9,6 @@ interface HudProps {
     status: GameStatus;
     isTouch: boolean;
     lastSkillUsed: { id: string, name: string; life: number } | null;
-    onStartRecording: () => void;
-    isRecording: boolean;
 }
 
 const WEAPON_ICONS: Record<WeaponType, string> = {
@@ -22,20 +19,7 @@ const WEAPON_ICONS: Record<WeaponType, string> = {
     [WeaponType.Airdrop]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNNjAsODBIODVWMzBINjBWNDVINDVWODBIOSIgc3Ryb2tlPSIjODc2MjQxIiBmaWxsPSIjQjU4NDU5IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNMjUsMzAgaDIwIHYtMjAgYTEwIDEwIDAgMSAxIDIwIDAgdjIwIGgyMCIgc3Ryb2tlPSIjRUZFRkZGIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==",
 };
 
-const RecordIcon: React.FC = () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
-        <circle cx="12" cy="12" r="8" fill="#f87171" />
-    </svg>
-);
-
-const RecordingIcon: React.FC = () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
-        <circle cx="12" cy="12" r="8" fill="#ef4444" className="animate-pulse" />
-    </svg>
-);
-
-
-export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, lastSkillUsed, onStartRecording, isRecording }) => {
+export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, lastSkillUsed }) => {
     const { health, maxHealth, xp, xpToNextLevel, level, weapons } = player;
     const healthPercentage = (health / maxHealth) * 100;
     const xpPercentage = (xp / xpToNextLevel) * 100;
@@ -109,20 +93,6 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
                         <p className="text-5xl font-cinzel text-red-500 animate-pulse text-shadow">WARNING: MIGRATING BOSS</p>
                      </div>
                 )}
-            </div>
-            
-            <div className="absolute top-4 right-4 z-20 pointer-events-auto">
-                <button
-                    onClick={onStartRecording}
-                    disabled={isRecording}
-                    className="w-12 h-12 bg-gray-800/50 rounded-full border-2 border-gray-600 backdrop-blur-sm flex justify-center items-center text-white transition-colors hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-600"
-                    aria-label={isRecording ? 'Recording in progress' : 'Start recording'}
-                    title={isRecording ? 'Recording...' : 'Record Run'}
-                >
-                    <div className="w-6 h-6">
-                        {isRecording ? <RecordingIcon /> : <RecordIcon />}
-                    </div>
-                </button>
             </div>
         </>
     );

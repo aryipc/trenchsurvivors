@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ENEMY_DATA, CROCODILE_ICON } from '../../constants';
 import { WeaponType, EnemyType, ItemType } from '../../types';
@@ -7,13 +6,6 @@ import { STATIC_DESCRIPTIONS } from '../../services/geminiService';
 interface InfoModalProps {
     onClose: () => void;
 }
-
-const RecordIcon = () => (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12 flex-shrink-0">
-        <circle cx="12" cy="12" r="8" fill="#f87171" />
-    </svg>
-);
-
 
 const ICONS: Record<string, string> = {
     [WeaponType.ShillTweet]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cG9seWdvbiBwb2ludHM9IjEwLDEwIDkwLDUwIDEwLDkwIDI1LDUwIiBmaWxsPSIjMzhiZGY4Ii8+PC9zdmc+",
@@ -37,12 +29,9 @@ const Section: React.FC<{title: string; children: React.ReactNode}> = ({ title, 
     </div>
 );
 
-const InfoItem: React.FC<{icon?: string; iconComponent?: React.ReactNode; name: string; children: React.ReactNode}> = ({ icon, iconComponent, name, children }) => (
+const InfoItem: React.FC<{icon: string; name: string; children: React.ReactNode}> = ({ icon, name, children }) => (
     <div className="flex items-start space-x-4 p-3 bg-gray-800/50 rounded-lg">
-        <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
-            {icon && <img src={icon} alt={name} className="w-full h-full" style={{ imageRendering: 'pixelated' }} />}
-            {iconComponent}
-        </div>
+        <img src={icon} alt={name} className="w-12 h-12 flex-shrink-0" style={{ imageRendering: 'pixelated' }} />
         <div>
             <h3 className="font-bold text-lg text-white">{name}</h3>
             <p className="text-gray-400 text-sm">{children}</p>
@@ -92,17 +81,14 @@ const InfoModal: React.FC<InfoModalProps> = ({ onClose }) => {
                     })}
                 </Section>
 
-                <Section title="Utilities & Items">
+                <Section title="Special Items">
                     {Object.values(ItemType).map(type => {
                         return (
                             <InfoItem key={type} icon={ICONS[type]} name={type}>
-                                Powerful one-time use items dropped by enemies. Touch them to activate their effect immediately.
+                                A powerful one-time use item dropped by enemies. Press SPACE to activate.
                             </InfoItem>
                         )
                     })}
-                     <InfoItem iconComponent={<RecordIcon />} name="Screen Recorder">
-                        Click the record button in the top-right to capture your run. The video is saved locally when the game ends.
-                    </InfoItem>
                 </Section>
             </div>
         </div>
