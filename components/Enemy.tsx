@@ -1,5 +1,7 @@
 
 
+
+
 import React from 'react';
 import { Enemy, EnemyType } from '../types';
 import { ENEMY_DATA } from '../constants';
@@ -47,12 +49,6 @@ const EnemyComponent: React.FC<EnemyProps> = ({ enemy }) => {
         <div className="absolute z-5" style={style}>
             <img src={svgToUse} alt={ENEMY_DATA[enemy.type].name} className="w-full h-full" />
             
-            {enemy.devLockMessage && (
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 speech-bubble">
-                    <span className="font-bold text-xs whitespace-nowrap">{enemy.devLockMessage}</span>
-                </div>
-            )}
-
             {enemy.isBoss && (
                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-[150px] h-4 bg-red-900 border-2 border-red-500 rounded-full overflow-hidden">
                     <div 

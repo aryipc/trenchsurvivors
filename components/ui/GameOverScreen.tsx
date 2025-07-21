@@ -70,7 +70,7 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, marketCap, maxBa
 
     return (
         <div className="absolute inset-0 bg-black bg-opacity-80 flex flex-col justify-center items-center z-30 text-white p-4">
-            <h1 className="text-8xl text-red-500 mb-2 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">RUG PULLED</h1>
+            <h1 className="text-8xl font-cinzel text-red-500 mb-2 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">RUG PULLED</h1>
             <p className="text-gray-300 text-xl mb-6 text-center italic">"{commentary}"</p>
             
             {isNewHighScore && username && (
@@ -89,7 +89,7 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, marketCap, maxBa
             <div className="flex flex-col items-center gap-2">
                 <button
                     onClick={onRestart}
-                    className="bg-yellow-400 text-gray-900 font-bold py-4 px-10 rounded-lg text-2xl hover:bg-yellow-300 transition-colors transform hover:scale-105"
+                    className="bg-yellow-400 text-gray-900 font-bold py-4 px-10 rounded-lg text-2xl font-cinzel hover:bg-yellow-300 transition-colors transform hover:scale-105"
                 >
                     Ape In Again
                 </button>

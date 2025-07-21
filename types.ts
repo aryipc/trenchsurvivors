@@ -1,5 +1,9 @@
 
 
+
+
+
+
 export enum GameStatus {
     NotStarted,
     Playing,
@@ -8,7 +12,6 @@ export enum GameStatus {
     GameOver,
     BossFight,
     Leaderboard,
-    Victory,
 }
 
 export enum WeaponType {
@@ -29,7 +32,6 @@ export enum EnemyType {
 export enum ItemType {
     Candle = 'Candle',
     BONKAura = 'BONK AURA',
-    DevLock = 'Dev Lock',
 }
 
 export type CandleVariant = 'Gake' | 'West' | '奶牛candle';
@@ -81,7 +83,6 @@ export interface Enemy extends GameObject {
         duration: number;
     };
     isSlowed?: boolean;
-    devLockMessage?: string;
 }
 
 export interface Projectile extends GameObject {
@@ -139,7 +140,6 @@ export interface LaserBeam {
     width: number;
     damage: number; // Damage per second
     level: number;
-    tickTimer: number;
 }
 
 export interface ItemDrop {
@@ -214,7 +214,6 @@ export interface GameState {
         marketCapVolatilityTimer: number;
         rangedAttackTimer: number;
         redCandleAttackTimer: number;
-        fudSpawnTimer: number;
     } | null;
     bossHasBeenDefeated: boolean;
     currentUser: CurrentUser | null;
@@ -226,8 +225,6 @@ export interface GameState {
     airdropBonkEvent: { timer: number; dropsLeft: number; dropCooldown: number; } | null;
     isPaperHandsUpgraded: boolean;
     upcomingRedCandleAttack: RedCandleAttackInfo | null;
-    devLockEffect: { timer: number; duration: number; } | null;
-    enemyScalingLevel: number;
 }
 
 export interface UpgradeOption {
@@ -277,6 +274,7 @@ export interface ItemData {
     name: string;
     svg: string;
     variants?: Record<string, ItemVariantData>;
+    damage?: number;
     radius?: number;
     duration?: number;
 }
@@ -287,5 +285,4 @@ export interface ItemVariantData {
     length: number;
     width: number;
     rotations?: number;
-    damage: number;
 }
