@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { GameState, Enemy, Projectile, ExperienceGem, WeaponType, FloatingText, Airdrop, VisualEffect, Player, LaserBeam, ItemDrop, ItemType, ActiveCandle, ActiveItem } from '../types';
 import PlayerComponent from './Player';
@@ -171,12 +172,16 @@ const ItemDropComponent: React.FC<{ drop: ItemDrop }> = React.memo(({ drop }) =>
     if (drop.type !== ItemType.Candle) return null; // Good practice for future items
     const candleData = ITEM_DATA[ItemType.Candle];
 
+    // Determine glow color based on the variant
+    const isGakeCandle = drop.variant === 'Gake';
+    const glowColor = isGakeCandle ? '#FBBF24' : '#10B981'; // Yellow for Gake, Green for others
+
     const style: React.CSSProperties = {
         left: drop.x - 12,
         top: drop.y - 20,
         width: 24,
         height: 40,
-        filter: 'drop-shadow(0 0 8px #10B981)',
+        filter: `drop-shadow(0 0 8px ${glowColor})`,
     };
     return (
         <div className="absolute animate-pulse" style={style}>

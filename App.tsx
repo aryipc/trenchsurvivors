@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import GameScreen from './components/GameScreen';
 import { Hud } from './components/ui/Hud';
@@ -139,6 +141,16 @@ const App: React.FC = () => {
             lastMoveDy: -1,
             avatarUrl: user?.avatarUrl,
         };
+
+        // Create a specific 'Gake' candle item drop and place it above the player
+        const startingItemDrop: ItemDrop = {
+            id: `item_start_gake_${Date.now()}`,
+            x: initialPlayer.x,
+            y: initialPlayer.y - 80, // Place it above the player
+            type: ItemType.Candle,
+            variant: 'Gake',
+        };
+
         setGameState({
             status: GameStatus.Playing,
             player: initialPlayer,
@@ -148,7 +160,7 @@ const App: React.FC = () => {
             floatingTexts: [],
             airdrops: [],
             visualEffects: [],
-            itemDrops: [],
+            itemDrops: [startingItemDrop],
             activeItems: [],
             activeLaser: null,
             gameTime: 0,
@@ -510,8 +522,13 @@ const App: React.FC = () => {
                 if (dist < player.width / 2 + 15) {
                     // Item collected, activate immediately
                     if (drop.type === ItemType.Candle) {
-                        const random = Math.random();
-                        const chosenVariant: CandleVariant = (random < 0.80) ? 'West' : (random < 0.90) ? '奶牛candle' : 'Gake';
+                        // If the drop has a specified variant (like the starting one), use it.
+                        // Otherwise, pick a random variant for drops from enemies.
+                        const chosenVariant: CandleVariant = drop.variant || (() => {
+                            const random = Math.random();
+                            return (random < 0.80) ? 'West' : (random < 0.90) ? '奶牛candle' : 'Gake';
+                        })();
+                        
                         const candleData = ITEM_DATA[ItemType.Candle].variants![chosenVariant];
                         
                         // Activation logic moved here

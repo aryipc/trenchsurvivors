@@ -2,6 +2,7 @@
 
 
 
+
 export enum GameStatus {
     NotStarted,
     Playing,
@@ -137,6 +138,7 @@ export interface ItemDrop {
     x: number;
     y: number;
     type: ItemType;
+    variant?: CandleVariant;
 }
 
 export interface ActiveCandle {
