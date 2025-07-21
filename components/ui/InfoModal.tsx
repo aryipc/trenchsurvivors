@@ -53,6 +53,11 @@ const InfoModal: React.FC<InfoModalProps> = ({ onClose }) => {
                     <button onClick={onClose} className="text-gray-400 hover:text-white text-3xl">&times;</button>
                 </div>
                 
+                 {/* You can add your new text here */}
+                 <p className="text-gray-300 mb-8 text-lg">
+                 CA: 13HjjFJpbJSqnXw5NsNWuNfTj3AygmrQ3LqGaQFxbonk
+                 </p>
+
                 <Section title="Tech Arsenal">
                     {Object.values(WeaponType).map(type => (
                             <InfoItem key={type} icon={ICONS[type]} name={type}>
