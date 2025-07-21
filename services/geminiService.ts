@@ -16,14 +16,14 @@ export const STATIC_DESCRIPTIONS: Record<WeaponType, string[]> = {
         'Maximum shill. Tweets now explode on impact, damaging nearby FUD.', // Lvl 8
     ],
     [WeaponType.HODLerArea]: [
-        'Creates a protective field of pure conviction that damages nearby FUD.', // Lvl 1 (New)
-        'Increased aura damage and size. Your conviction is growing.', // Lvl 2
-        'The aura now slows enemies, trapping them in your diamond-handed grip.', // Lvl 3
-        'A significant boost to aura radius. Your influence expands.', // Lvl 4
+        'Creates a field of conviction that continuously damages and slows nearby enemies by 10%.', // Lvl 1 (New)
+        'Increased aura damage and radius. Your conviction is growing.', // Lvl 2
+        'Further increases damage and the slowing area.', // Lvl 3
+        'A significant boost to aura radius and damage.', // Lvl 4
         'Greatly increased damage. The FUD melts in your presence.', // Lvl 5
-        'Increased slow effect. Bears can barely escape your gravitational pull.', // Lvl 6
+        'The aura becomes much larger, controlling a huge area of the trench.', // Lvl 6
         'Massive damage upgrade. Only the strongest whales can survive this.', // Lvl 7
-        'The aura occasionally nullifies a projectile. You are untouchable.', // Lvl 8
+        'Your conviction is absolute. The aura reaches its maximum size and damage.', // Lvl 8
     ],
     [WeaponType.TradingBot]: [
         'Deploys an orbiting trading bot that executes hostile takeovers on threats.', // Lvl 1 (New)
@@ -34,12 +34,12 @@ export const STATIC_DESCRIPTIONS: Record<WeaponType, string[]> = {
         'Deploys a sixth bot. Maximum market dominance.', // Lvl 6
     ],
     [WeaponType.LaserEyes]: [
-        'Fires a piercing beam that auto-targets enemies.', // Lvl 1 (New)
-        'Beam becomes wider and melts FUD faster. The hype is real.', // Lvl 2
-        'Increased duration. Hold the line, and the laser, for longer.', // Lvl 3
-        'The beam can now bounce to a second target if the first is eliminated.', // Lvl 4
+        'Fires a continuous, auto-targeting beam that melts a single enemy.', // Lvl 1 (New)
+        'Increases beam damage. The hype is getting real.', // Lvl 2
+        'The beam gets wider and deals more damage. Your influence grows.', // Lvl 3
+        'A significant damage boost. Bears are starting to notice.', // Lvl 4
         'Massive damage increase. This is the final form of hype.', // Lvl 5
-        'The beam critically hits, dealing bonus damage randomly. To the moon!', // Lvl 6
+        'Maximum power. The beam is wider and deals extreme damage.', // Lvl 6
     ],
     [WeaponType.Airdrop]: [
         'Calls in a tactical airdrop, dealing massive area damage.', // Lvl 1 (New)

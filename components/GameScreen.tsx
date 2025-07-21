@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { GameState, Enemy, Projectile, ExperienceGem, WeaponType, FloatingText, Airdrop, VisualEffect, Player, LaserBeam, ItemDrop, ItemType, ActiveCandle, ActiveItem } from '../types';
 import PlayerComponent from './Player';
@@ -48,7 +49,7 @@ const TradingBotComponent: React.FC<TradingBotProps> = React.memo(({ x, y, size,
 });
 
 
-const AIRDROP_CRATE_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNNjAsODBIODVWMzBINjBWNDVINDVWODBIOSIgc3Ryb2tlPSIjODc2MjQxIiBmaWxsPSIjQjU4NDU5IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNMjUsMzAgaDIwIHYtMjAgYTEwIDEwIDAgMSAxIDIwIDAgdjIwIGgyMCIgc3Ryb2tlPSIjRUZFRkZGIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==";
+const AIRDROP_CRATE_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiBmaWxsPSIjQTlCOEM1Ij48cGF0aCBkPSJNMTUsNTAgQzE1LDI3LjkgMzAuNywxMCA1MCwxMCBDNjkuMywxMCA4NSwyNy45IDg1LDUwWiIvPjxyZWN0IHg9IjQ1IiB5PSI1MCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjI1IiAvPjwvc3ZnPg==";
 const AirdropComponent: React.FC<{airdrop: Airdrop}> = React.memo(({ airdrop }) => {
     const fallProgress = 1 - (airdrop.fallTimer / airdrop.totalFallTime);
     const currentY = airdrop.startY + (airdrop.y - airdrop.startY) * fallProgress;
@@ -250,6 +251,11 @@ const ItemDropComponent: React.FC<{ drop: ItemDrop }> = React.memo(({ drop }) =>
             height = 40;
             glowColor = '#EF4444'; // Red glow
             break;
+        case ItemType.DevLock:
+            width = 35;
+            height = 35;
+            glowColor = '#facc15'; // yellow-400
+            break;
     }
 
     const style: React.CSSProperties = {
@@ -299,6 +305,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, isTouch }) => {
     };
     
     const isBonked = bonkMode !== null;
+
     const hodlerAreaWeapon = player.weapons.find(w => w.type === WeaponType.HODLerArea);
     const auraRadius = hodlerAreaWeapon ? (WEAPON_DATA[WeaponType.HODLerArea].radius || 50) + (hodlerAreaWeapon.level - 1) * 15 : 0;
     

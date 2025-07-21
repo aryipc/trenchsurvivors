@@ -46,7 +46,7 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ scores, onBack, l
     return (
         <div className="absolute inset-0 bg-gray-900 flex flex-col items-center z-30 text-white p-2 pt-12 md:p-4 md:pt-16 overflow-y-auto" style={{ touchAction: 'pan-y' }}>
             <div className="w-full max-w-4xl">
-                <h1 className="text-5xl md:text-6xl font-cinzel text-yellow-300 mb-6 text-center drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">High Scores</h1>
+                <h1 className="text-5xl md:text-6xl text-yellow-300 mb-6 text-center drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">High Scores</h1>
                 
                 <div className="bg-gray-800 border-2 border-gray-700 rounded-lg shadow-lg max-h-[60vh] min-h-[20vh] overflow-y-auto" style={{ touchAction: 'pan-y' }}>
                     {loading ? (
@@ -76,8 +76,8 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ scores, onBack, l
                                                 <span className="truncate">{entry.username}</span>
                                             </div>
                                         </td>
-                                        <td className="p-2 md:p-4 text-sm md:text-base text-yellow-300 font-mono text-right align-middle">{formatMarketCap(entry.score)}</td>
-                                        <td className="p-2 md:p-4 text-sm md:text-base text-green-400 font-mono text-right align-middle">{formatBalance(entry.maxBalance)}</td>
+                                        <td className="p-2 md:p-4 text-sm md:text-base text-yellow-300 text-right align-middle">{formatMarketCap(entry.score)}</td>
+                                        <td className="p-2 md:p-4 text-sm md:text-base text-green-400 text-right align-middle">{formatBalance(entry.maxBalance)}</td>
                                         <td className="p-2 md:p-4 text-xs md:text-sm text-gray-400 text-right align-middle">{formatDate(entry.date)}</td>
                                     </tr>
                                 ))}
@@ -92,7 +92,7 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ scores, onBack, l
                     <p className="text-xs text-gray-500 mb-4 px-4">Note: X avatars are based on user-provided handles and may not represent the actual account holder.</p>
                     <button
                         onClick={onBack}
-                        className="bg-green-500 text-gray-900 font-bold py-3 px-10 rounded-lg text-xl font-cinzel hover:bg-green-400 transition-colors transform hover:scale-105"
+                        className="bg-green-500 text-gray-900 font-bold py-3 px-10 rounded-lg text-xl hover:bg-green-400 transition-colors transform hover:scale-105"
                     >
                         Back
                     </button>

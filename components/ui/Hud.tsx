@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Player, ItemType, GameStatus, WeaponType } from '../../types';
 import { ITEM_DATA, CROCODILE_ICON } from '../../constants';
@@ -12,6 +13,7 @@ interface HudProps {
     specialEventMessage: { id: string, text: string; life: number } | null;
     isBonked: boolean;
     bonkMode: { timer: number; duration: number; } | null;
+    devLockEffect: { timer: number; duration: number; } | null;
 }
 
 const WEAPON_ICONS: Record<WeaponType, string> = {
@@ -19,10 +21,10 @@ const WEAPON_ICONS: Record<WeaponType, string> = {
     [WeaponType.HODLerArea]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSIxNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utd2lkdGg9IjQiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSIzMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utb3BhY2l0eT0iMC42IiBzdHJva2Utd2lkdGg9IjQiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0NSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZENzAwIiBzdHJva2Utb3BhY2l0eT0iMC4zIiBzdHJva2Utd2lkdGg9IjQiLz48L3N2Zz4=",
     [WeaponType.TradingBot]: CROCODILE_ICON,
     [WeaponType.LaserEyes]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNIDEwIDUwIEMgMTAgMjAsIDkwIDIwLCA5MCA1MCBDIDkwIDgwLCAxMCA4MCwgMTAgNTBaIiBmaWxsPSIjZmZmIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMyIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjI1IiBmaWxsPSIjZjAwIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMTAiIGZpbGw9IiMwMDAiLz48Y2lyY2xlIGN4PSI0NSIgY3k9IjQwIiByPSI4IiBmaWxsPSIjZmZmIiBvcGFjaXR5PSIwLjciLz48L3N2Zz4=",
-    [WeaponType.Airdrop]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNNjAsODBIODVWMzBINjBWNDVINDVWODBIOSIgc3Ryb2tlPSIjODc2MjQxIiBmaWxsPSIjQjU4NDU5IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNMjUsMzAgaDIwIHYtMjAgYTEwIDEwIDAgMSAxIDIwIDAgdjIwIGgyMCIgc3Ryb2tlPSIjRUZFRkZGIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==",
+    [WeaponType.Airdrop]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiBmaWxsPSIjQTlCOEM1Ij48cGF0aCBkPSJNMTUsNTAgQzE1LDI3LjkgMzAuNywxMCA1MCwxMCBDNjkuMywxMCA4NSwyNy45IDg1LDUwWiIvPjxyZWN0IHg9IjQ1IiB5PSI1MCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjI1IiAvPjwvc3ZnPg==",
 };
 
-export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, lastSkillUsed, specialEventMessage, isBonked, bonkMode }) => {
+export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, lastSkillUsed, specialEventMessage, isBonked, bonkMode, devLockEffect }) => {
     const { health, maxHealth, xp, xpToNextLevel, level, weapons } = player;
     const healthPercentage = (health / maxHealth) * 100;
     const xpPercentage = (xp / xpToNextLevel) * 100;
@@ -36,7 +38,7 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
             <div className="absolute top-0 left-0 right-0 p-4 text-white z-10 pointer-events-none">
                 <div className="flex justify-center items-center mb-2 flex-col">
                     <span className="text-sm font-bold text-yellow-300 tracking-widest">MARKET CAP</span>
-                    <span className="text-4xl font-cinzel text-shadow">{formatMarketCap(marketCap)}</span>
+                    <span className="text-4xl text-shadow">{formatMarketCap(marketCap)}</span>
                 </div>
                 <div className="max-w-4xl mx-auto">
                      {/* Top row stats */}
@@ -90,6 +92,19 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
                             </div>
                         </div>
                     )}
+
+                    {/* Dev Lock Timer Bar */}
+                    {devLockEffect && (
+                        <div className="mt-2 w-full max-w-[240px] mx-auto">
+                            <div className="text-center text-sm font-bold text-yellow-400 animate-pulse">DEV LOCK ACTIVE</div>
+                            <div className="w-full bg-gray-700 rounded-full h-2.5 border border-gray-600">
+                                <div
+                                    className="bg-yellow-500 h-full rounded-full"
+                                    style={{ width: `${(devLockEffect.timer / devLockEffect.duration) * 100}%` }}
+                                ></div>
+                            </div>
+                        </div>
+                    )}
                     
                     {/* Activated Skill Name & Special Events */}
                     <div className="relative h-20 pointer-events-none -mb-4">
@@ -98,7 +113,7 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
                                 key={lastSkillUsed.id} // Re-triggers animation on new use
                                 className="absolute inset-0 flex items-center justify-center animate-skill-pop"
                             >
-                                <h3 className="font-cinzel text-5xl text-green-400 text-shadow">
+                                <h3 className="text-5xl text-green-400 text-shadow">
                                     {lastSkillUsed.name}
                                 </h3>
                             </div>
@@ -108,7 +123,7 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
                                 key={specialEventMessage.id} // Re-triggers animation on new use
                                 className="absolute inset-0 flex items-center justify-center animate-skill-pop"
                             >
-                                <h3 className="font-cinzel text-6xl text-yellow-300 text-shadow">
+                                <h3 className="text-6xl text-yellow-300 text-shadow">
                                     {specialEventMessage.text}
                                 </h3>
                             </div>
@@ -118,7 +133,7 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
 
                 {status === GameStatus.BossFight && (
                      <div className="absolute top-32 left-1/2 -translate-x-1/2">
-                        <p className="text-5xl font-cinzel text-red-500 animate-pulse text-shadow">WARNING: MIGRATING BOSS</p>
+                        <p className="text-5xl text-red-500 animate-pulse text-shadow">WARNING: MIGRATING BOSS</p>
                      </div>
                 )}
             </div>

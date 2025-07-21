@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Settings } from '../../types';
 
@@ -33,7 +34,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ settings, onUpdateSetting
             >
                 <div className="p-8">
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-4xl font-cinzel text-green-400">Settings</h1>
+                        <h1 className="text-4xl text-green-400">Settings</h1>
                         <button onClick={onClose} className="text-gray-400 hover:text-white text-4xl leading-none">&times;</button>
                     </div>
 
