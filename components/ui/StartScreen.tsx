@@ -97,7 +97,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onShowLeaderboard, s
              <div className="relative z-10 w-full h-full flex flex-col justify-center items-center">
                  <div className="absolute top-4 right-4 flex items-center space-x-2">
                      <a 
-                        href="https://x.com/i/communities/1947179185392255158"
+                        href="https://x.com/i/communities/1948656814683254864"
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label="Join our X Community"
@@ -106,7 +106,7 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onShowLeaderboard, s
                         <CommunityIcon />
                      </a>
                      <a 
-                        href="https://x.com/trenvive_sol"
+                        href="https://x.com/trench4_life"
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label="Follow on X"
