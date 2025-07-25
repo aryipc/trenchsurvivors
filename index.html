@@ -4,11 +4,11 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Trench Survivors</title>
+    <title>Trench 4 Life</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&family=Luckiest+Guy&display=swap" rel="stylesheet">
     <style>
       html, body {
         width: 100%;
@@ -27,6 +27,35 @@
         font-family: 'Gaegu', cursive;
         font-weight: 700; /* Use bold for titles */
       }
+      .font-mario {
+        font-family: 'Luckiest Guy', cursive;
+        text-transform: uppercase;
+        /* A thick black outline and drop shadow to mimic the logo style */
+        text-shadow:
+          -2px -2px 0 #000,  
+           2px -2px 0 #000,
+          -2px  2px 0 #000,
+           2px  2px 0 #000,
+           4px  4px 2px rgba(0,0,0,0.4); /* The main drop shadow */
+      }
+      .text-rainbow span {
+          display: inline-block;
+      }
+      .text-rainbow span:nth-of-type(1),
+      .text-rainbow span:nth-of-type(5),
+      .text-rainbow span:nth-of-type(11) { color: #E52521; } /* Red */
+
+      .text-rainbow span:nth-of-type(2),
+      .text-rainbow span:nth-of-type(6),
+      .text-rainbow span:nth-of-type(12) { color: #FBD000; } /* Yellow */
+
+      .text-rainbow span:nth-of-type(3),
+      .text-rainbow span:nth-of-type(8),
+      .text-rainbow span:nth-of-type(13) { color: #43B047; } /* Green */
+      
+      .text-rainbow span:nth-of-type(4),
+      .text-rainbow span:nth-of-type(10) { color: #049CD8; } /* Blue */
+
       @keyframes pulse-aura {
         0%, 100% {
           transform: scale(1);
@@ -56,7 +85,7 @@
       }
 
       .text-shadow {
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        text-shadow: 2px 2px 2px rgba(0,0,0,0.8);
       }
 
       @keyframes skill-name-pop {
@@ -108,6 +137,21 @@
       }
       .animate-pulse-slow {
         animation: pulse-slow-aura 3s ease-in-out infinite;
+      }
+
+      @keyframes float-background {
+        from {
+          transform: translateY(105vh) rotate(0deg);
+        }
+        to {
+          transform: translateY(-10vh) rotate(360deg);
+        }
+      }
+      .animate-float-background {
+        animation-name: float-background;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+        will-change: transform;
       }
     </style>
   <script type="importmap">

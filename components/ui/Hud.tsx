@@ -12,6 +12,7 @@ interface HudProps {
     specialEventMessage: { id: string, text: string; life: number } | null;
     isBonked: boolean;
     bonkMode: { timer: number; duration: number; } | null;
+    devLockMode: { timer: number; duration: number; } | null;
 }
 
 const WEAPON_ICONS: Record<WeaponType, string> = {
@@ -22,7 +23,7 @@ const WEAPON_ICONS: Record<WeaponType, string> = {
     [WeaponType.Airdrop]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNNjAsODBIODVWMzBINjBWNDVINDVWODBIOSIgc3Ryb2tlPSIjODc2MjQxIiBmaWxsPSIjQjU4NDU5IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNMjUsMzAgaDIwIHYtMjAgYTEwIDEwIDAgMSAxIDIwIDAgdjIwIGgyMCIgc3Ryb2tlPSIjRUZFRkZGIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==",
 };
 
-export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, lastSkillUsed, specialEventMessage, isBonked, bonkMode }) => {
+export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, lastSkillUsed, specialEventMessage, isBonked, bonkMode, devLockMode }) => {
     const { health, maxHealth, xp, xpToNextLevel, level, weapons } = player;
     const healthPercentage = (health / maxHealth) * 100;
     const xpPercentage = (xp / xpToNextLevel) * 100;
@@ -91,6 +92,19 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
                         </div>
                     )}
                     
+                    {/* DEV LOCK Timer Bar */}
+                    {devLockMode && (
+                        <div className="mt-2 w-full max-w-[240px] mx-auto">
+                            <div className="text-center text-sm font-bold text-yellow-400 animate-pulse">DEV LOCK ACTIVE</div>
+                            <div className="w-full bg-gray-700 rounded-full h-2.5 border border-gray-600">
+                                <div
+                                    className="bg-yellow-400 h-full rounded-full"
+                                    style={{ width: `${(devLockMode.timer / devLockMode.duration) * 100}%` }}
+                                ></div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Activated Skill Name & Special Events */}
                     <div className="relative h-20 pointer-events-none -mb-4">
                         {lastSkillUsed && (

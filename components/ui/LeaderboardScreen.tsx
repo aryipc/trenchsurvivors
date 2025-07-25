@@ -1,6 +1,3 @@
-
-
-
 import React from 'react';
 import { ScoreEntry } from '../../types';
 import { SHIBA_HELMET_ICON } from '../../constants';
@@ -68,11 +65,14 @@ const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ scores, onBack, l
                                         <td className="p-2 md:p-4 text-lg md:text-xl font-bold text-center align-middle">{index + 1}</td>
                                         <td className="p-2 md:p-4 text-base align-middle">
                                             <div className="flex items-center gap-2 md:gap-3">
-                                                <img 
-                                                    src={entry.avatarUrl || SHIBA_HELMET_ICON} 
-                                                    alt={entry.username} 
-                                                    className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-700 object-cover flex-shrink-0" 
-                                                />
+                                                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-700 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                                    <img
+                                                        src={entry.avatarUrl || SHIBA_HELMET_ICON}
+                                                        alt={entry.username}
+                                                        className="w-full h-full object-cover"
+                                                        style={{ transform: !entry.avatarUrl ? 'scale(1.4)' : 'none' }}
+                                                    />
+                                                </div>
                                                 <span className="truncate">{entry.username}</span>
                                             </div>
                                         </td>

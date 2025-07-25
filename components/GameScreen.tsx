@@ -1,3 +1,5 @@
+
+
 import React from 'react';
 import { GameState, Enemy, Projectile, ExperienceGem, WeaponType, FloatingText, Airdrop, VisualEffect, Player, LaserBeam, ItemDrop, ItemType, ActiveCandle, ActiveItem } from '../types';
 import PlayerComponent from './Player';
@@ -211,7 +213,9 @@ const LaserBeamComponent: React.FC<LaserBeamProps> = React.memo(({ player, beam,
         pointerEvents: 'none',
     };
 
-    if (isBonked) {
+    const isRainbowLaser = isBonked || beam.isRainbow;
+
+    if (isRainbowLaser) {
         const bonkStyle: React.CSSProperties = {
             ...baseStyle,
             backgroundImage: 'linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff)',
@@ -295,7 +299,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ gameState, isTouch }) => {
         height: `${GAME_AREA_HEIGHT}px`,
         transform: `scale(${zoom}) translate(${-camera.x}px, ${-camera.y}px)`,
         transformOrigin: 'top left',
-        backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23374151\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+        backgroundColor: '#382e28', // Muddy brown base
+        backgroundImage: `radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,0.6) 100%), url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M26 95V81M77 75V59M40 94L26 81L1 72M92 63L77 59L71 42M26 81L43 72L26 59L45 52L24 38L47 31L21 16L48 10L14 1L2 2V98L98 99V2L86 10L52 16L79 31L55 38L74 52L57 59L43 72' stroke='%232a211c' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")`,
     };
     
     const isBonked = bonkMode !== null;

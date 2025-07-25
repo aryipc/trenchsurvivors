@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Settings } from '../types';
 
-const SETTINGS_KEY = 'trenchSurvivorsSettings';
+const SETTINGS_KEY = 'trench4LifeSettings';
 
 const defaultSettings: Settings = {
     screenShake: true,

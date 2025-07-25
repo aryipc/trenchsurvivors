@@ -2,6 +2,8 @@
 
 
 
+
+
 import React from 'react';
 import { Enemy, EnemyType } from '../types';
 import { ENEMY_DATA } from '../constants';
@@ -47,6 +49,26 @@ const EnemyComponent: React.FC<EnemyProps> = ({ enemy }) => {
 
     return (
         <div className="absolute z-5" style={style}>
+            {enemy.chatBubble && (
+                <div 
+                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap px-3 py-1 bg-white text-black text-sm font-bold rounded-lg shadow-lg"
+                    style={{
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))'
+                    }}
+                >
+                    {enemy.chatBubble.text}
+                    {/* Speech bubble arrow */}
+                    <div 
+                        className="absolute left-1/2 -translate-x-1/2 -bottom-1.5 w-0 h-0"
+                        style={{
+                            borderLeft: '8px solid transparent',
+                            borderRight: '8px solid transparent',
+                            borderTop: '8px solid white',
+                        }}
+                    ></div>
+                </div>
+            )}
+
             <img src={svgToUse} alt={ENEMY_DATA[enemy.type].name} className="w-full h-full" />
             
             {enemy.isBoss && (

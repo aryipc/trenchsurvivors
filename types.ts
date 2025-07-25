@@ -1,9 +1,3 @@
-
-
-
-
-
-
 export enum GameStatus {
     NotStarted,
     Playing,
@@ -32,6 +26,7 @@ export enum EnemyType {
 export enum ItemType {
     Candle = 'Candle',
     BONKAura = 'BONK AURA',
+    DevLock = 'Dev Lock',
 }
 
 export type CandleVariant = 'Gake' | 'West' | '奶牛candle';
@@ -80,6 +75,10 @@ export interface Enemy extends GameObject {
         speed: number;
     };
     stun?: {
+        duration: number;
+    };
+    chatBubble?: {
+        text: string;
         duration: number;
     };
     isSlowed?: boolean;
@@ -140,6 +139,7 @@ export interface LaserBeam {
     width: number;
     damage: number; // Damage per second
     level: number;
+    isRainbow?: boolean;
 }
 
 export interface ItemDrop {
@@ -222,9 +222,11 @@ export interface GameState {
     specialEventMessage: { id: string, text: string; life: number } | null;
     isHardMode: boolean;
     bonkMode: { timer: number; duration: number; } | null;
+    devLockMode: { timer: number; duration: number; } | null;
     airdropBonkEvent: { timer: number; dropsLeft: number; dropCooldown: number; } | null;
     isPaperHandsUpgraded: boolean;
     upcomingRedCandleAttack: RedCandleAttackInfo | null;
+    devLockHasDropped: boolean;
 }
 
 export interface UpgradeOption {

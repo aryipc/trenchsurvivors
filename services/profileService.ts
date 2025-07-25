@@ -1,7 +1,7 @@
 
 import { CurrentUser } from '../types';
 
-const LAST_PROFILE_KEY = 'trenchSurvivorsLastProfile';
+const LAST_PROFILE_KEY = 'trench4LifeLastProfile';
 
 /**
  * Saves the last used user profile to localStorage.

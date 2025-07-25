@@ -1,7 +1,8 @@
 import React from 'react';
-import { ENEMY_DATA, CROCODILE_ICON } from '../../constants';
+import { ENEMY_DATA, CROCODILE_ICON, DEV_LOCK_ICON } from '../../constants';
 import { WeaponType, EnemyType, ItemType } from '../../types';
 import { STATIC_DESCRIPTIONS } from '../../services/geminiService';
+import { ITEM_DATA } from '../../constants';
 
 interface InfoModalProps {
     onClose: () => void;
@@ -17,7 +18,9 @@ const ICONS: Record<string, string> = {
     [EnemyType.PaperHands]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNMjAsMjAgTDgwLDI1IEwgNzUsODAgTDI1LDc1IFoiIGZpbGw9IiNDQ0MiIHN0cm9rZT0iIzk5OSIgc3Ryb2tlLXdpZHRoPSIzIi8+PHBhdGggZD0iTTgwLDI1IEw3OCw0NSBMNTAsNDAgTDQ4LDMwIHogTTI1LDc1IEwzMCw1NSBMNTUsNjAgTDQ1LDcwIHoiIGZpbGw9IiNEREQiLz48cGF0aCBkPSJNMzUsMzUgQzQ1LDI1LDU1LDI1LDY1LDM1IiBmaWxsPSJub25lIiBzdHJva2U9IiMxMTIiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBhdGggZD0iTTQ1LDYwIEw1NSw2MCIgc3Ryb2tlPSIjMTExIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==",
     [EnemyType.RivalWhale]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNMTAgNTBDOCAzMCAzMCwxMCA1MCwxMUM3MCwxMCA5MiwyNSA5MCA1MEM5NSw4MCA2NSw5NSA1MCw5NUMzNSw5NSAxMiw3NSAxMCA1MFoiIGZpbGw9IiMxRTQxN0YiLz48cGF0aCBkPSJNMTAgNTBDMTUgNTUgMjAgNTIgMjUgNTdMMjUgNzBINyBaIiBmaWxsPSIjN0JBQ0UyIi8+PGNpcmNsZSBjeD0iNzUiIGN5PSIzNSIgcj0iOCIgZmlsbD0id2hpdGUiLz48Y2lyY2xlIGN4PSI3NyIgY3k9IjM1IiByPSI0IiBmaWxsPSJibGFjayIvPjxsaW5lIHgxPSI5MCIgeTE9IjUwIiB4Mj0iODUiIHkyPSI3MCIgc3Ryb2tlPSIjN0JBQ0UyIiBzdHJva2Utd2lkdGg9IjEwIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=",
     [EnemyType.MigratingBoss]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImdyYWQxIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6IzJkMzc0ODtzdG9wLW9wYWNpdHk6MSIgLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiMxYTIwMmM7c3RvcC1vcGFjaXR5OjEiIC8+PC9saW5lYXJHcmFkaWVudD48ZmlsdGVyIGlkPSJnbG93Ij48ZmVHYXVzc2lhbkJsdXIgc3RkRGV2aWF0aW9uPSIzLjUiIHJlc3VsdD0iY29sb3JlZEJsdXIiLz48ZmVNZXJnZT48ZmVNZXJnZU5vZGUgaW49ImNvbG9yZWRCbHVyIi8+PGZlTWVyZ2VOb2RlIGluPSJTb3VyY2VHcmFwaGljIi8+PC9mZU1lcmdlPjwvZmlsdGVyPjwvZGVmcz48cGF0aCBkPSJNICAyMCA5NSBMIDMwIDEwIEwgNzAgMTAgTCA4MCA5NSBaIiBmaWxsPSJ1cmwoI2dyYWQxKSIgc3Ryb2tlPSIjNGE1NTY4IiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBkPSJNIDQwIDQwIEwgNjAgNDAgTCA1OCA1NSBMIDQyIDU1IFoiIGZpbGw9IiNlZjQ0NDQiIGZpbHRlcj0idXJsKCNnbG93KSIvPjxsaW5lIHgxPSI1MCIgeTE9IjEwIiB4Mj0iNTAiIHkyPSI5NSIgc3Ryb2tlPSIjNGE1NTY4IiBzdHJva2Utd2lkdGg9IjAuNSIvPjxsaW5lIHgxPSIzNSIgeTE9IjEwIiB4Mj0iMjUiIHkyPSI5NSIgc3Ryb2tlPSIjNGE1NTY4IiBzdHJva2Utd2lkdGg9IjAuNSIvPjxsaW5lIHgxPSI2NSIgeTE9IjEwIiB4Mj0iNzUiIHkyPSI5NSIgc3Ryb2tlPSIjNGE1NTY4IiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvc3ZnPg==",
-    [ItemType.Candle]: "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNDAgMTAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9IiMxMEI5ODEiPjxyZWN0IHg9IjE4IiB5PSIwIiB3aWR0aD0iNCIgaGVpZ2h0PSIxMDAiIC8+PHJlY3QgeD0iNSIgeT0iMjAiIHdpZHRoPSIzMCIgaGVpZ2h0PSI2MCIgLz48L3N2Zz4=",
+    [ItemType.Candle]: ITEM_DATA[ItemType.Candle].svg,
+    [ItemType.BONKAura]: ITEM_DATA[ItemType.BONKAura].svg,
+    [ItemType.DevLock]: DEV_LOCK_ICON,
 };
 
 const Section: React.FC<{title: string; children: React.ReactNode}> = ({ title, children }) => (
@@ -55,7 +58,7 @@ const InfoModal: React.FC<InfoModalProps> = ({ onClose }) => {
                 
                  {/* You can add your new text here */}
                  <p className="text-gray-300 mb-8 text-lg">
-                 CA: 13HjjFJpbJSqnXw5NsNWuNfTj3AygmrQ3LqGaQFxbonk
+                 CA: wsfcJpZYCxn8ih1B76TQD8jWNR88AWELKoo3EAubonk
                  </p>
 
                 <Section title="Tech Arsenal">
@@ -87,15 +90,12 @@ const InfoModal: React.FC<InfoModalProps> = ({ onClose }) => {
                 </Section>
 
                 <Section title="Special Items">
-                    {Object.values(ItemType)
-                        .filter(type => type !== ItemType.BONKAura)
-                        .map(type => {
-                        return (
-                            <InfoItem key={type} icon={ICONS[type]} name={type}>
-                                A powerful, one-time use item dropped by enemies. It activates automatically when you walk over it.
-                            </InfoItem>
-                        )
-                    })}
+                    <InfoItem icon={ICONS[ItemType.Candle]} name="Candle">
+                        A powerful, one-time use item. Unleashes a destructive rotating beam. Different variants have unique effects.
+                    </InfoItem>
+                    <InfoItem icon={ICONS[ItemType.DevLock]} name="Dev Lock">
+                        A powerful artifact that freezes all market threats in time for 5 seconds, stopping them in their tracks.
+                    </InfoItem>
                 </Section>
             </div>
         </div>

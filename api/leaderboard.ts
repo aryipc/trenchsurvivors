@@ -1,3 +1,4 @@
+
 import { kv } from '@vercel/kv';
 // @ts-ignore
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -16,8 +17,8 @@ interface CurrentUser {
     avatarUrl: string;
 }
 
-const LEADERBOARD_KEY = 'trench_survivors_leaderboard_v2';
-const USER_KEY_PREFIX = 'trench_survivors_user_v2:';
+const LEADERBOARD_KEY = 'trench_4_life_leaderboard_v1';
+const USER_KEY_PREFIX = 'trench_4_life_user_v1:';
 
 // This function runs on the server and can securely access KV.
 const getLeaderboardFromKV = async (): Promise<ScoreEntry[]> => {
