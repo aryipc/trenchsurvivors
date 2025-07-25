@@ -212,13 +212,22 @@ export const runGameTick = (prevState: GameState, delta: number, isTouch: boolea
             const side = Math.floor(Math.random() * 4);
             let x, y;
             const spawnOffset = 50;
-            const viewRect = { left: state.camera.x, right: state.camera.x + window.innerWidth, top: state.camera.y, bottom: state.camera.y + window.innerHeight };
+            // Adjust viewport for zoom on mobile to ensure enemies spawn off-screen correctly
+            const viewZoom = isTouch ? 0.75 : 1.0;
+            const viewWidth = window.innerWidth / viewZoom;
+            const viewHeight = window.innerHeight / viewZoom;
+            const viewRect = {
+                left: state.camera.x,
+                right: state.camera.x + viewWidth,
+                top: state.camera.y,
+                bottom: state.camera.y + viewHeight,
+            };
             
             switch (side) {
-                case 0: x = viewRect.left + Math.random() * window.innerWidth; y = viewRect.top - spawnOffset; break;
-                case 1: x = viewRect.right + spawnOffset; y = viewRect.top + Math.random() * window.innerHeight; break;
-                case 2: x = viewRect.left + Math.random() * window.innerWidth; y = viewRect.bottom + spawnOffset; break;
-                default: x = viewRect.left - spawnOffset; y = viewRect.top + Math.random() * window.innerHeight; break;
+                case 0: x = viewRect.left + Math.random() * viewWidth; y = viewRect.top - spawnOffset; break;
+                case 1: x = viewRect.right + spawnOffset; y = viewRect.top + Math.random() * viewHeight; break;
+                case 2: x = viewRect.left + Math.random() * viewWidth; y = viewRect.bottom + spawnOffset; break;
+                default: x = viewRect.left - spawnOffset; y = viewRect.top + Math.random() * viewHeight; break;
             }
             
             const enemyData = ENEMY_DATA[enemyTypeToSpawn];
