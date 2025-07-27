@@ -4,7 +4,8 @@ import InfoModal from './InfoModal';
 import XProfileModal from './XLoginModal';
 import SettingsModal from './SettingsModal';
 import StartScreenBackground from './StartScreenBackground';
-import { CurrentUser, Settings } from '../../types';
+import TokenShopModal from './TokenShopModal';
+import { CurrentUser, Settings, PermanentUpgrades } from '../../types';
 import { saveLastProfile, getLastProfile } from '../../services/profileService';
 import { getLeaderboard } from '../../services/leaderboardService';
 import { SHIBA_HELMET_ICON } from '../../constants';
@@ -14,6 +15,8 @@ interface StartScreenProps {
     onShowLeaderboard: () => void;
     settings: Settings;
     onUpdateSettings: (newSettings: Partial<Settings>) => void;
+    permanentUpgrades: PermanentUpgrades;
+    onUpdatePermanentUpgrades: (newUpgrades: Partial<PermanentUpgrades>) => void;
 }
 
 const XLogo = () => (
@@ -21,6 +24,13 @@ const XLogo = () => (
         <g>
             <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
         </g>
+    </svg>
+);
+
+const SolanaLogo = () => (
+    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 fill-current">
+        <title>Solana</title>
+        <path d="M6.42 4.137a.84.84 0 00-.77.104.839.839 0 00-.455.72l.004.053v14.072c0 .33.19.623.475.764a.833.833 0 00.826-.03l.05-.03 11.23-6.524a.826.826 0 00.428-.729.825.825 0 00-.428-.729L6.47 4.24a.835.835 0 00-.05-.02zm11.276 7.135L6.42 17.8V5.04l11.276 6.524zM4.15 5.925a.837.837 0 00-.81.23l-.05.05-2.21 2.45c-.21.23-.28.56-.18.85l.05.1 7.42 11.28c.21.32.59.45.92.35l.1-.05 2.21-1.28c.27-.16.42-.46.42-.78l-.01-.1-7.42-11.28a.84.84 0 00-.7-.4zM19.85 18.075a.837.837 0 00.81-.23l.05-.05 2.21-2.45c.21-.23.28-.56.18-.85l-.05-.1-7.42-11.28c-.21-.32-.59-.45-.92-.35l-.1.05-2.21 1.28c-.27.16-.42.46-.42.78l.01.1 7.42 11.28c.21.32.59.44.92.35z"></path>
     </svg>
 );
 
@@ -37,10 +47,11 @@ const GearIcon = () => (
     </svg>
 );
 
-const StartScreen: React.FC<StartScreenProps> = ({ onStart, onShowLeaderboard, settings, onUpdateSettings }) => {
+const StartScreen: React.FC<StartScreenProps> = ({ onStart, onShowLeaderboard, settings, onUpdateSettings, permanentUpgrades, onUpdatePermanentUpgrades }) => {
     const [isInfoModalOpen, setInfoModalOpen] = useState(false);
     const [isXModalOpen, setXModalOpen] = useState(false);
     const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
+    const [isTokenShopOpen, setTokenShopOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
     const [topScore, setTopScore] = useState<string | null>(null);
@@ -93,6 +104,8 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onShowLeaderboard, s
              {isInfoModalOpen && <InfoModal onClose={() => setInfoModalOpen(false)} />}
              {isXModalOpen && <XProfileModal onClose={() => setXModalOpen(false)} onConfirm={handleLogin} isSubmitting={isSubmitting} />}
              {isSettingsModalOpen && <SettingsModal settings={settings} onUpdateSettings={onUpdateSettings} onClose={() => setSettingsModalOpen(false)} />}
+             {isTokenShopOpen && <TokenShopModal onClose={() => setTokenShopOpen(false)} upgrades={permanentUpgrades} onPurchase={onUpdatePermanentUpgrades} />}
+
 
              <div className="relative z-10 w-full h-full flex flex-col justify-center items-center">
                  <div className="absolute top-4 right-4 flex items-center space-x-1 md:space-x-2">
@@ -152,12 +165,21 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onShowLeaderboard, s
                             >
                                 Play
                             </button>
-                            <button
-                                onClick={onShowLeaderboard}
-                                className="w-full bg-gray-700 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-gray-600 transition-colors"
-                            >
-                                Leaderboard
-                            </button>
+                            <div className="flex gap-4 w-full">
+                                <button
+                                    onClick={onShowLeaderboard}
+                                    className="w-full bg-gray-700 text-white font-bold py-3 rounded-lg text-lg hover:bg-gray-600 transition-colors"
+                                >
+                                    Leaderboard
+                                </button>
+                                <button
+                                    onClick={() => setTokenShopOpen(true)}
+                                    className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white font-bold py-3 rounded-lg text-lg hover:bg-purple-500 transition-colors"
+                                >
+                                    <SolanaLogo />
+                                    Upgrades
+                                </button>
+                            </div>
                             <div className="flex items-center gap-2 mt-2 bg-gray-800/50 px-3 py-2 rounded-full">
                                <span className="text-gray-400">Welcome,</span>
                                {currentUser.avatarUrl && <img src={currentUser.avatarUrl} alt={currentUser.username} className="w-6 h-6 rounded-full" />}
@@ -180,12 +202,21 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, onShowLeaderboard, s
                             >
                                 Play as Guest
                             </button>
-                            <button
-                                onClick={onShowLeaderboard}
-                                className="w-full bg-gray-700 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-gray-600 transition-colors"
-                            >
-                                Leaderboard
-                            </button>
+                             <div className="flex gap-4 w-full">
+                                <button
+                                    onClick={onShowLeaderboard}
+                                    className="w-full bg-gray-700 text-white font-bold py-3 rounded-lg text-lg hover:bg-gray-600 transition-colors"
+                                >
+                                    Leaderboard
+                                </button>
+                                <button
+                                    onClick={() => setTokenShopOpen(true)}
+                                    className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white font-bold py-3 rounded-lg text-lg hover:bg-purple-500 transition-colors"
+                                >
+                                    <SolanaLogo />
+                                    Upgrades
+                                </button>
+                            </div>
                         </>
                      )}
                 </div>

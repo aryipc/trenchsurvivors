@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { ENEMY_DATA, CROCODILE_ICON, DEV_LOCK_ICON } from '../../constants';
+import { ENEMY_DATA, CROCODILE_ICON, DEV_LOCK_ICON, TOKEN_UPGRADES } from '../../constants';
 import { WeaponType, EnemyType, ItemType } from '../../types';
 import { STATIC_DESCRIPTIONS } from '../../services/geminiService';
 import { ITEM_DATA } from '../../constants';
@@ -34,7 +35,7 @@ const Section: React.FC<{title: string; children: React.ReactNode}> = ({ title, 
 
 const InfoItem: React.FC<{icon: string; name: string; children: React.ReactNode}> = ({ icon, name, children }) => (
     <div className="flex items-start space-x-4 p-3 bg-gray-800/50 rounded-lg">
-        <img src={icon} alt={name} className="w-12 h-12 flex-shrink-0" style={{ imageRendering: 'pixelated' }} />
+        <img src={icon} alt={name} className="w-12 h-12 flex-shrink-0 object-contain" style={{ imageRendering: 'pixelated' }} />
         <div>
             <h3 className="font-bold text-lg text-white">{name}</h3>
             <p className="text-gray-400 text-sm">{children}</p>
@@ -56,9 +57,8 @@ const InfoModal: React.FC<InfoModalProps> = ({ onClose }) => {
                     <button onClick={onClose} className="text-gray-400 hover:text-white text-3xl">&times;</button>
                 </div>
                 
-                 {/* You can add your new text here */}
                  <p className="text-gray-300 mb-8 text-lg">
-                 CA: wsfcJpZYCxn8ih1B76TQD8jWNR88AWELKoo3EAubonk
+                    This document outlines the core mechanics of the Trench 4 Life simulation. Stay vigilant, shill hard, and may your bags never be heavy.
                  </p>
 
                 <Section title="Tech Arsenal">
@@ -95,6 +95,14 @@ const InfoModal: React.FC<InfoModalProps> = ({ onClose }) => {
                     </InfoItem>
                     <InfoItem icon={ICONS[ItemType.DevLock]} name="Dev Lock">
                         A powerful artifact that freezes all market threats in time for 5 seconds, stopping them in their tracks.
+                    </InfoItem>
+                </Section>
+                 <Section title="Solana Upgrades">
+                    <InfoItem icon={TOKEN_UPGRADES.BONUS_DAMAGE.icon} name={TOKEN_UPGRADES.BONUS_DAMAGE.name}>
+                        {TOKEN_UPGRADES.BONUS_DAMAGE.description} Purchase in the "Solana Upgrades" shop from the main menu.
+                    </InfoItem>
+                    <InfoItem icon={TOKEN_UPGRADES.BONUS_XP.icon} name={TOKEN_UPGRADES.BONUS_XP.name}>
+                       {TOKEN_UPGRADES.BONUS_XP.description} Purchase in the "Solana Upgrades" shop from the main menu.
                     </InfoItem>
                 </Section>
             </div>

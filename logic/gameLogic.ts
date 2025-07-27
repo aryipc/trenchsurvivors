@@ -1,3 +1,4 @@
+
 import { GameState, GameStatus, Player, Enemy, Projectile, ExperienceGem, FloatingText, Airdrop, VisualEffect, ItemDrop, ActiveItem, LaserBeam, Weapon, WeaponType, EnemyType, ItemType, ActiveCandle, CandleVariant, Settings } from '../types';
 import { WEAPON_DATA, ENEMY_DATA, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, MC_PER_SECOND, BOSS_SPAWN_MC, STARTING_MC, MC_VOLATILITY_INTERVAL, MC_VOLATILITY_AMOUNT, BOSS_RANGED_ATTACK_COOLDOWN, BOSS_RANGED_ATTACK_DAMAGE, BOSS_RANGED_ATTACK_SPEED, BOSS_PROJECTILE_WIDTH, BOSS_PROJECTILE_HEIGHT, BOSS_RED_CANDLE_COOLDOWN, BOSS_RED_CANDLE_WARNING_DURATION, BOSS_RED_CANDLE_WIDTH, BOSS_RED_CANDLE_ATTACK_DURATION, BOSS_RED_CANDLE_DAMAGE_PER_SEC, ITEM_DROP_CHANCE, ITEM_DATA, LEVEL_THRESHOLDS, DEV_LOCK_MESSAGES } from '../constants';
 
@@ -21,6 +22,7 @@ export const runGameTick = (prevState: GameState, delta: number, isTouch: boolea
     // --- Start with a shallow copy. We will replace arrays and objects that change. ---
     let state = { ...prevState };
 
+    const damageMultiplier = 1 + state.permanentUpgrades.bonusDamage;
     state.gameTime += delta;
 
     if (state.lastSkillUsed) {
@@ -276,7 +278,7 @@ export const runGameTick = (prevState: GameState, delta: number, isTouch: boolea
 
             const weaponData = WEAPON_DATA[WeaponType.Airdrop];
             const effectiveLevel = weaponData.maxLevel + 1;
-            const damage = weaponData.damage + (effectiveLevel - 1) * 10;
+            const damage = (weaponData.damage + (effectiveLevel - 1) * 10) * damageMultiplier;
             const radius = (weaponData.radius || 120) + (effectiveLevel - 1) * 5;
             const airdropId = `airdrop_bonk_${Date.now()}_${Math.random()}`;
             state.airdrops = [...state.airdrops, { id: airdropId, x, y, startY: y - 500, fallTimer: 2.0, totalFallTime: 2.0, radius, damage }];
@@ -325,7 +327,7 @@ export const runGameTick = (prevState: GameState, delta: number, isTouch: boolea
                     
                     if (nearestEnemy) {
                         const laserWidth = weaponData.width + (effectiveLevel - 1) * 5;
-                        let laserDamage = weaponData.damage + (effectiveLevel - 1) * 5;
+                        let laserDamage = (weaponData.damage + (effectiveLevel - 1) * 5) * damageMultiplier;
                         
                         const rainbowChance = 0.01 + (effectiveLevel - 1) * 0.005;
                         const isRainbow = Math.random() < rainbowChance;
@@ -365,7 +367,7 @@ export const runGameTick = (prevState: GameState, delta: number, isTouch: boolea
                         }
                     } else {
                         const targetEnemy = state.enemies[Math.floor(Math.random() * state.enemies.length)];
-                        const damage = weaponData.damage + (effectiveLevel - 1) * 10;
+                        const damage = (weaponData.damage + (effectiveLevel - 1) * 10) * damageMultiplier;
                         const radius = (weaponData.radius || 120) + (effectiveLevel - 1) * 5;
                         const airdropId = `airdrop_${Date.now()}`;
                         airdropsToAdd.push({ id: airdropId, x: targetEnemy.x, y: targetEnemy.y, startY: targetEnemy.y - 500, fallTimer: 2.0, totalFallTime: 2.0, radius, damage });
@@ -407,7 +409,7 @@ export const runGameTick = (prevState: GameState, delta: number, isTouch: boolea
                 const dist = Math.hypot(e.x - ad.x, e.y - ad.y);
                 if (dist < ad.radius + e.width / 2) {
                     e.health -= ad.damage;
-                    state.floatingTexts = addFloatingText(state.floatingTexts, ad.damage.toString(), e.x, e.y, settings, '#FF8C00');
+                    state.floatingTexts = addFloatingText(state.floatingTexts, Math.floor(ad.damage).toString(), e.x, e.y, settings, '#FF8C00');
                     if (dist > 1) { e.knockback = { dx: (e.x - ad.x) / dist, dy: (e.y - ad.y) / dist, duration: 0.25, speed: 700 }; }
                 }
             });
@@ -578,9 +580,9 @@ export const runGameTick = (prevState: GameState, delta: number, isTouch: boolea
                     const shillTweetWeapon = newPlayer.weapons.find(w => w.type === WeaponType.ShillTweet);
                     let effectiveLevel = shillTweetWeapon?.level || 1;
                     if (isBonked) effectiveLevel = WEAPON_DATA[WeaponType.ShillTweet].maxLevel + 1;
-                    const damage = WEAPON_DATA[WeaponType.ShillTweet].damage + (effectiveLevel - 1) * 8;
+                    const damage = (WEAPON_DATA[WeaponType.ShillTweet].damage + (effectiveLevel - 1) * 8) * damageMultiplier;
                     e.health -= damage;
-                    state.floatingTexts = addFloatingText(state.floatingTexts, damage.toString(), e.x, e.y, settings, '#38bdf8');
+                    state.floatingTexts = addFloatingText(state.floatingTexts, Math.floor(damage).toString(), e.x, e.y, settings, '#38bdf8');
                     hit = true;
                 }
             });
@@ -624,9 +626,9 @@ export const runGameTick = (prevState: GameState, delta: number, isTouch: boolea
             const auraData = WEAPON_DATA[WeaponType.HODLerArea];
             const radius = (auraData.radius || 50) + (effectiveLevel - 1) * 15;
             if (Math.hypot(newPlayer.x - e.x, newPlayer.y - e.y) < radius) {
-                const damageThisTick = auraData.damage * effectiveLevel * delta;
+                const damageThisTick = (auraData.damage * effectiveLevel) * delta * damageMultiplier;
                 e.health -= damageThisTick;
-                if (Math.random() < 3 * delta) state.floatingTexts = addFloatingText(state.floatingTexts, Math.ceil((auraData.damage * effectiveLevel) / 3).toString(), e.x + (Math.random() - 0.5) * 10, e.y, settings, '#FFD700');
+                if (Math.random() < 3 * delta) state.floatingTexts = addFloatingText(state.floatingTexts, Math.ceil((auraData.damage * effectiveLevel * damageMultiplier) / 3).toString(), e.x + (Math.random() - 0.5) * 10, e.y, settings, '#FFD700');
             }
         }
         
@@ -640,8 +642,9 @@ export const runGameTick = (prevState: GameState, delta: number, isTouch: boolea
                     const botX = newPlayer.x + (botData.radius || 80) * Math.cos(angle);
                     const botY = newPlayer.y + (botData.radius || 80) * Math.sin(angle);
                     if (Math.hypot(e.x - botX, e.y - botY) < e.width / 2 + botData.width / 2) {
-                        e.health -= botData.damage;
-                        state.floatingTexts = addFloatingText(state.floatingTexts, botData.damage.toString(), e.x, e.y, settings, '#6EF8F8');
+                        const damage = botData.damage * damageMultiplier;
+                        e.health -= damage;
+                        state.floatingTexts = addFloatingText(state.floatingTexts, Math.floor(damage).toString(), e.x, e.y, settings, '#6EF8F8');
                         e.lastHitBy[WeaponType.TradingBot] = state.gameTime;
                         break;
                     }
@@ -656,7 +659,7 @@ export const runGameTick = (prevState: GameState, delta: number, isTouch: boolea
             const t = Math.max(0, Math.min(1, ((e.x - x1) * (x2 - x1) + (e.y - y1) * (y2 - y1)) / l2));
             const closestX = x1 + t * (x2 - x1); const closestY = y1 + t * (y2 - y1);
             if (Math.hypot(e.x - closestX, e.y - closestY) < (state.activeLaser.width / 2) + (e.width / 2)) {
-                const damageThisTick = state.activeLaser.damage * delta;
+                const damageThisTick = state.activeLaser.damage * delta; // Multiplier is already in activeLaser.damage
                 e.health -= damageThisTick;
                 if (Math.random() < 5 * delta) state.floatingTexts = addFloatingText(state.floatingTexts, Math.ceil(state.activeLaser.damage / 2).toString(), e.x, e.y, settings, '#ff4747');
             }
@@ -672,10 +675,11 @@ export const runGameTick = (prevState: GameState, delta: number, isTouch: boolea
                 const t = Math.max(0, Math.min(1, ((e.x - x1) * (x2 - x1) + (e.y - y1) * (y2 - y1)) / l2));
                 const closestX = x1 + t * (x2 - x1); const closestY = y1 + t * (y2 - y1);
                 if (Math.hypot(e.x - closestX, e.y - closestY) < (candle.width / 2) + (e.width / 2)) {
-                    const damage = candle.variant === '奶牛candle' ? 5 : 10000;
+                    const baseDamage = candle.variant === '奶牛candle' ? 5 : 10000;
+                    const damage = baseDamage * damageMultiplier;
                     const color = candle.variant === '奶牛candle' ? '#FF8C00' : '#34D399';
                     e.health -= damage;
-                    state.floatingTexts = addFloatingText(state.floatingTexts, damage.toString(), e.x, e.y, settings, color);
+                    state.floatingTexts = addFloatingText(state.floatingTexts, Math.floor(damage).toString(), e.x, e.y, settings, color);
                     item.hitEnemyIds.push(e.id);
                 }
             }
@@ -728,7 +732,7 @@ export const runGameTick = (prevState: GameState, delta: number, isTouch: boolea
     // --- Gem Collection ---
     state.gems = state.gems.filter(gem => {
         if (Math.hypot(newPlayer.x - gem.x, newPlayer.y - gem.y) < newPlayer.width / 2 + 10) {
-            newPlayer.xp += gem.value;
+            newPlayer.xp += gem.value * (1 + state.permanentUpgrades.bonusXpRate);
             return false;
         }
         return true;

@@ -1,3 +1,4 @@
+
 import { WeaponType, WeaponData, EnemyType, EnemyData, ItemType, ItemVariantData, ItemData } from './types';
 
 export const SHIBA_HELMET_ICON = "data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='dogFurT4L' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23f4a161'/%3E%3Cstop offset='100%25' stop-color='%23e77f51'/%3E%3C/linearGradient%3E%3ClinearGradient id='muzzleFurT4L' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23fff5e6'/%3E%3Cstop offset='100%25' stop-color='%23fde1c7'/%3E%3C/linearGradient%3E%3Cpattern id='camoT4L' patternUnits='userSpaceOnUse' width='50' height='50'%3E%3Crect width='50' height='50' fill='%23556B2F'/%3E%3Cpath d='M 0 0 C 10 20 20 0 30 15 C 40 30 50 10 50 50 L 0 50 Z' fill='%236B8E23'/%3E%3Cpath d='M 20 10 C 30 30 40 15 50 25 L 50 0 L 30 0 C 20 -10 10 10 20 10 Z' fill='%238B4513' opacity='0.6'/%3E%3C/pattern%3E%3C/defs%3E%3Cg transform='rotate(-5 50 50)'%3E%3Cg%3E%3Cpath fill='url(%23dogFurT4L)' stroke='%234f423a' stroke-width='3' d='M80,72 C88,55 78,40 70,38 C60,35 40,35 30,38 C22,40 12,55 20,72 C25,85 38,92 50,92 C62,92 75,85 80,72 Z'/%3E%3Cpath fill='url(%23muzzleFurT4L)' stroke='%234f423a' stroke-width='3' d='M38,84 C35,75 40,68 50,68 C60,68 65,75 62,84 C60,88 55,90 50,90 C45,90 40,88 38,84 Z'/%3E%3Cpath fill='none' stroke='%234f423a' stroke-width='2' stroke-linecap='round' d='M46,80 Q50,82 56,79'/%3E%3Cpath fill='%232c201a' d='M50,73 m-4,0 a4,4 0 1 1 8,0 a4,4 0 1 1 -8,0'/%3E%3Cg%3E%3Cellipse cx='41' cy='62' rx='7' ry='3.5' fill='%232c201a'/%3E%3Cellipse cx='64' cy='62' rx='7' ry='3.5' fill='%232c201a'/%3E%3Ccircle cx='38' cy='61' r='1.5' fill='white'/%3E%3Ccircle cx='61' cy='61' r='1.5' fill='white'/%3E%3C/g%3E%3Cpath fill='url(%23dogFurT4L)' stroke='%234f423a' stroke-width='3' d='M25,50 C20,35 45,35 45,35 L40,55 Z'/%3E%3Cpath fill='%23fde1c7' stroke='%234f423a' stroke-width='1.5' d='M28,48 C25,40 35,40 35,40 L48,53 Z'/%3E%3Cpath fill='url(%23dogFurT4L)' stroke='%234f423a' stroke-width='3' d='M75,58 C80,35 65,35 65,35 L60,55 Z'/%3E%3Cpath fill='%23fde1c7' stroke='%234f423a' stroke-width='1.5' d='M72,48 C75,40 65,40 65,40 L62,53 Z'/%3E%3C/g%3E%3Cg transform='translate(0, -15) scale(1.15)'%3E%3Cpath d='M14 58 C 12 40, 25 26, 50 26 C 75 26, 88 40, 86 58 L 89 60 Q 50 64, 11 60 L 14 58 Z' fill='url(%23camoT4L)' stroke='%23333' stroke-width='2.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E";
@@ -218,5 +219,25 @@ export const ITEM_DATA: Record<ItemType, ItemData> = {
         name: 'Dev Lock',
         svg: DEV_LOCK_ICON,
         duration: 5,
+    },
+};
+
+// Solana Token Upgrades
+export const TOKEN_UPGRADES = {
+    BONUS_DAMAGE: {
+        id: 'bonusDamage' as const,
+        name: 'Diamond Hands',
+        cost: 100,
+        description: 'Permanently increase all damage by 10%.',
+        damageBonus: 0.1,
+        icon: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2M0YjVmZCI+PHBhdGggZD0iTTEyIDJMMCAxMmg5djlMMjIgMTJoLTlWMnoiLz48L3N2Zz4='
+    },
+    BONUS_XP: {
+        id: 'bonusXp' as const,
+        name: 'Market Insight',
+        cost: 250,
+        description: 'Permanently gain 10% more Hype from all sources.',
+        xpBonus: 0.1,
+        icon: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2M0YjVmZCI+PHBhdGggZD0iTTEyIDhsLTYgNmgxMmwLTYtNnoiLz48L3N2Zz4='
     },
 };

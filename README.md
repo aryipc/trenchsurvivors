@@ -44,6 +44,12 @@ You can have up to six unique weapons. Each can be upgraded multiple times.
 Enemies have a small chance to drop powerful, single-use items that activate automatically when you walk over them.
 - **Candles (Gake, West, etc.):** Unleash a powerful, rotating beam that decimates enemies. Different candle variants have unique effects, like doubling your max balance or stunning all enemies.
 - **BONK Aura:** Activates "BONK Mode," a temporary state where all your weapons are massively overpowered.
+- **Dev Lock:** Freezes all enemies on the screen for a short duration.
+
+#### Solana Upgrades (Token Shop)
+From the main menu, you can access the "Solana Upgrades" shop. Here, you can spend T4L tokens to purchase permanent, account-wide bonuses that apply to every game you play.
+- **Diamond Hands:** Permanently increases all damage by 10%.
+- **Market Insight:** Permanently increases the amount of Hype (XP) you gain from all sources by 10%.
 
 #### Enemies
 - **FUD:** Standard, slow-moving entities representing Fear, Uncertainty, and Doubt.
@@ -84,6 +90,7 @@ The codebase is organized to separate concerns, making it easier to maintain and
 │   │   └── Player.tsx      # Renders the player character.
 │   ├── hooks/
 │   │   ├── useGameLoop.ts  # Manages the core requestAnimationFrame loop.
+│   │   ├── usePermanentUpgrades.ts # Manages permanent upgrades in localStorage.
 │   │   ├── useSettings.ts  # Manages user settings in localStorage.
 │   │   └── useTouch.ts     # Handles mobile touch controls.
 │   ├── logic/
@@ -91,7 +98,8 @@ The codebase is organized to separate concerns, making it easier to maintain and
 │   ├── services/
 │   │   ├── geminiService.ts # (Now static) Handles descriptions for upgrades.
 │   │   ├── leaderboardService.ts # Client-side functions to call the leaderboard API.
-│   │   └── profileService.ts   # Manages user profile data in localStorage.
+│   │   ├── profileService.ts   # Manages user profile data in localStorage.
+│   │   └── upgradeService.ts   # Manages saving/loading permanent upgrades.
 │   ├── utils/
 │   │   └── upgradeHelper.ts# Logic for generating level-up options.
 │   ├── App.tsx             # Main application component, manages top-level state.

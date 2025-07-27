@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import GameScreen from './components/GameScreen';
 import { Hud } from './components/ui/Hud';
@@ -10,6 +11,7 @@ import LeaderboardScreen from './components/ui/LeaderboardScreen';
 import { useGameLoop } from './hooks/useGameLoop';
 import { useTouchControls } from './hooks/useTouch';
 import { useSettings } from './hooks/useSettings';
+import { usePermanentUpgrades } from './hooks/usePermanentUpgrades';
 import { GameState, Player, Enemy, Projectile, ExperienceGem, GameStatus, WeaponType, Weapon, UpgradeOption, FloatingText, EnemyType, Airdrop, VisualEffect, LaserBeam, ItemDrop, ActiveItem, ActiveCandle, CandleVariant, ItemType, ScoreEntry, CurrentUser, Settings } from './types';
 import { WEAPON_DATA, ENEMY_DATA, LEVEL_THRESHOLDS, GAME_AREA_WIDTH, GAME_AREA_HEIGHT, ITEM_DROP_CHANCE, ITEM_DATA, BOSS_SPAWN_MC, MC_PER_SECOND, STARTING_MC, MC_VOLATILITY_INTERVAL, MC_VOLATILITY_AMOUNT, BOSS_RANGED_ATTACK_COOLDOWN, BOSS_RANGED_ATTACK_DAMAGE, BOSS_RANGED_ATTACK_SPEED, BOSS_PROJECTILE_WIDTH, BOSS_PROJECTILE_HEIGHT, BOSS_RED_CANDLE_COOLDOWN, BOSS_RED_CANDLE_WARNING_DURATION, BOSS_RED_CANDLE_WIDTH, BOSS_RED_CANDLE_ATTACK_DURATION, BOSS_RED_CANDLE_DAMAGE_PER_SEC } from './constants';
 import { getUpgradeOptions } from './utils/upgradeHelper';
@@ -19,6 +21,8 @@ import { runGameTick } from './logic/gameLogic';
 
 
 const App: React.FC = () => {
+    const [permanentUpgrades, updatePermanentUpgrades] = usePermanentUpgrades();
+
     const [gameState, setGameState] = useState<GameState>(() => {
         const initialPlayer: Player = {
             id: 'player',
@@ -67,6 +71,7 @@ const App: React.FC = () => {
             isPaperHandsUpgraded: false,
             upcomingRedCandleAttack: null,
             devLockHasDropped: false,
+            permanentUpgrades: permanentUpgrades,
         };
     });
 
@@ -129,14 +134,15 @@ const App: React.FC = () => {
 
 
     const handleStartGame = (user: CurrentUser | null) => {
+        const initialHealth = 100;
         const initialPlayer: Player = {
             id: 'player',
             x: GAME_AREA_WIDTH / 2,
             y: GAME_AREA_HEIGHT / 2,
             width: 40,
             height: 40,
-            health: 100,
-            maxHealth: 100,
+            health: initialHealth,
+            maxHealth: initialHealth,
             level: 1,
             xp: 0,
             xpToNextLevel: LEVEL_THRESHOLDS[1],
@@ -186,6 +192,7 @@ const App: React.FC = () => {
             isPaperHandsUpgraded: false,
             upcomingRedCandleAttack: null,
             devLockHasDropped: false,
+            permanentUpgrades: permanentUpgrades,
         });
     };
 
@@ -306,6 +313,8 @@ const App: React.FC = () => {
                             onShowLeaderboard={handleShowLeaderboard}
                             settings={settings}
                             onUpdateSettings={updateSettings}
+                            permanentUpgrades={permanentUpgrades}
+                            onUpdatePermanentUpgrades={updatePermanentUpgrades}
                         />;
             case GameStatus.Leaderboard:
                 return <LeaderboardScreen scores={leaderboard} onBack={handleBackToMenu} loading={leaderboardLoading} />;
@@ -336,6 +345,7 @@ const App: React.FC = () => {
                             isBonked={gameState.bonkMode !== null}
                             bonkMode={gameState.bonkMode}
                             devLockMode={gameState.devLockMode}
+                            permanentUpgrades={permanentUpgrades}
                         />
                         <GameScreen gameState={gameState} isTouch={isTouch} />
                        

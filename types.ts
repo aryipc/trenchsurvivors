@@ -1,3 +1,4 @@
+
 export enum GameStatus {
     NotStarted,
     Playing,
@@ -183,6 +184,11 @@ export interface Settings {
     floatingText: boolean;
 }
 
+export interface PermanentUpgrades {
+    bonusDamage: number;
+    bonusXpRate: number;
+}
+
 export interface RedCandleAttackInfo {
     id: string;
     isVertical: boolean;
@@ -227,6 +233,7 @@ export interface GameState {
     isPaperHandsUpgraded: boolean;
     upcomingRedCandleAttack: RedCandleAttackInfo | null;
     devLockHasDropped: boolean;
+    permanentUpgrades: PermanentUpgrades;
 }
 
 export interface UpgradeOption {

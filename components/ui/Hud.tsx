@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Player, ItemType, GameStatus, WeaponType } from '../../types';
+import { Player, ItemType, GameStatus, WeaponType, PermanentUpgrades } from '../../types';
 import { ITEM_DATA, CROCODILE_ICON } from '../../constants';
 
 interface HudProps {
@@ -13,6 +14,7 @@ interface HudProps {
     isBonked: boolean;
     bonkMode: { timer: number; duration: number; } | null;
     devLockMode: { timer: number; duration: number; } | null;
+    permanentUpgrades: PermanentUpgrades;
 }
 
 const WEAPON_ICONS: Record<WeaponType, string> = {
@@ -23,7 +25,7 @@ const WEAPON_ICONS: Record<WeaponType, string> = {
     [WeaponType.Airdrop]: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNNjAsODBIODVWMzBINjBWNDVINDVWODBIOSIgc3Ryb2tlPSIjODc2MjQxIiBmaWxsPSIjQjU4NDU5IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNMjUsMzAgaDIwIHYtMjAgYTEwIDEwIDAgMSAxIDIwIDAgdjIwIGgyMCIgc3Ryb2tlPSIjRUZFRkZGIiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==",
 };
 
-export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, lastSkillUsed, specialEventMessage, isBonked, bonkMode, devLockMode }) => {
+export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTouch, lastSkillUsed, specialEventMessage, isBonked, bonkMode, devLockMode, permanentUpgrades }) => {
     const { health, maxHealth, xp, xpToNextLevel, level, weapons } = player;
     const healthPercentage = (health / maxHealth) * 100;
     const xpPercentage = (xp / xpToNextLevel) * 100;
@@ -52,7 +54,15 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
                             className="bg-green-500 h-full rounded-full transition-all duration-300"
                             style={{ width: `${healthPercentage}%` }}
                         ></div>
-                        <div className="absolute w-full text-center top-1/2 -translate-y-1/2 text-xs font-bold text-shadow">{Math.ceil(health)} / {maxHealth} Balance (U)</div>
+                        <div className="absolute w-full text-center top-1/2 -translate-y-1/2 text-xs font-bold text-shadow flex items-center justify-center gap-2">
+                            {permanentUpgrades.bonusDamage > 0 && 
+                                <span className="text-yellow-300 font-bold text-base leading-none flex items-center" title={`+${permanentUpgrades.bonusDamage * 100}% Damage from permanent upgrades`}>
+                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" /><path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" /></svg>
+                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
+                                </span>
+                            }
+                            <span>{Math.ceil(health)} / {maxHealth} Balance (U)</span>
+                        </div>
                     </div>
 
                     {/* XP Bar (Hype) */}
@@ -61,7 +71,12 @@ export const Hud: React.FC<HudProps> = ({ player, marketCap, kills, status, isTo
                             className="bg-blue-500 h-full rounded-full transition-all duration-300"
                             style={{ width: `${xpPercentage}%` }}
                         ></div>
-                         <div className="absolute w-full text-center top-1/2 -translate-y-1/2 text-xs font-bold text-shadow">{Math.floor(xp)} / {xpToNextLevel} Hype</div>
+                         <div className="absolute w-full text-center top-1/2 -translate-y-1/2 text-xs font-bold text-shadow flex items-center justify-center gap-1">
+                            {permanentUpgrades.bonusXpRate > 0 && 
+                                <span className="text-yellow-300 font-bold text-base leading-none" title={`+${permanentUpgrades.bonusXpRate * 100}% from permanent upgrades`}>+</span>
+                            }
+                           <span>{Math.floor(xp)} / {xpToNextLevel} Hype</span>
+                         </div>
                     </div>
 
                     {/* Acquired Weapons Display */}
