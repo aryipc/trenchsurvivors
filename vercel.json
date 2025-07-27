@@ -1,6 +1,1 @@
-{
-  "framework": null,
-  "outputDirectory": ".",
-  "installCommand": "echo \"Skipping server-side installation: all dependencies are handled by browser importmap.\"",
-  "buildCommand": "echo \"Skipping build step: this is a static site with an importmap.\""
-}
+{}
