@@ -1,13 +1,9 @@
-import { Buffer } from 'buffer';
-
-// Polyfill Buffer for the browser. Some Solana libraries rely on it being globally available.
-// This must be done at the top level of the entry file before other imports that might use it.
-(window as any).Buffer = Buffer;
-
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import WalletContextProvider from './components/WalletContextProvider';
+import '@solana/wallet-adapter-react-ui/styles.css';
+import './index.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
